@@ -1,13 +1,13 @@
 @---------------------------------------------------------------------------------
-.section .text,"ax"
-@---------------------------------------------------------------------------------
 	#include "equates.h"
-@---------------------------------------------------------------------------------	
+@---------------------------------------------------------------------------------
 	.global mapper85init
-	latch = mapperdata+0
-	irqen = mapperdata+1
-	k4irq = mapperdata+2
-	counter = mapperdata+3
+	latch = mapperData+0
+	irqen = mapperData+1
+	k4irq = mapperData+2
+	counter = mapperData+3
+@---------------------------------------------------------------------------------
+.section .text,"ax"
 @---------------------------------------------------------------------------------
 mapper85init:	@2Konami - Tiny Toon Adventure 2 (J)...
 		@ Lagrange Point, requires CHRRAM swappability  =)
@@ -15,7 +15,7 @@ mapper85init:	@2Konami - Tiny Toon Adventure 2 (J)...
 	.word write85,write85,write85,write85
 	b Konami_Init
 VRC7:
-	mov pc,lr
+	bx lr
 @---------------------------------------------------------------------------------
 write85:
 @---------------------------------------------------------------------------------

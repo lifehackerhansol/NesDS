@@ -1,7 +1,6 @@
 @---------------------------------------------------------------------------------
 	#include "equates.h"
 @---------------------------------------------------------------------------------
-	.global scaletable
 	.global PPU_init
 	.global PPU_reset
 	.global PPU_R
@@ -10,15 +9,10 @@
 	.global vram_map
 	.global vram_write_tbl
 	.global VRAM_chr
-	.global remap_pal
 	.global paletteinit
-	.global PaletteTxAll
-	.global Update_Palette
 	.global newframe
 	.global agb_pal
 	.global writeBG
-	.global gammavalue
-	.global nes_rgb
 	.global ctrl1_W
 	.global EMU_VBlank
 	.global ppusync
@@ -39,7 +33,6 @@
 	.global chr0123_
 	.global chr4567_
 	.global chr01234567_
-	.global cram1k
 	.global updateBGCHR
 	.global updateOBJCHR
 	.global mirror1H_
@@ -52,21 +45,13 @@
 	.global agb_bg_map
 	.global resetCHR
 	.global writeCHRTBL
-	@.global unpack_tiles
 	.global chr1k
 	.global chr2k
-	.global nes_nt0
-	.global DMAline
 	.global currentBG
-	.global nextBG
 	.global agb_bg_map
 	.global agb_obj_map
-	.global dispcnt
-	.global spchr_update
 	.global nes_palette
 	.global vromnt1k
-	.global gfx_scale
-	.global nespal
 
 @---------------------------------------------------------------------------------
 .section .text,"ax"
@@ -83,7 +68,7 @@
 
 @nes_rgb_1:		@AspiringSquire Real palette
 	.byte 108,108,108, 0,38,142, 0,0,168, 64,0,148, 112,0,112, 120,0,64, 112,0,0, 98,22,0
-	.byte 68,36,0, 52,52,0, 0,80,0, 0,68,68, 0,64,96, 0,0,0, 16,16,16, 16,16,16  
+	.byte 68,36,0, 52,52,0, 0,80,0, 0,68,68, 0,64,96, 0,0,0, 16,16,16, 16,16,16
 	.byte 186,186,186, 32,92,220, 56,56,255, 128,32,240, 192,0,192, 208,20,116, 208,32,32, 172,64,20
 	.byte 124,84,0, 88,100,0, 0,136,0, 0,116,104, 0,116,156, 32,32,32, 16,16,16, 16,16,16
 	.byte 255,255,255, 76,160,255, 136,136,255, 192,108,255, 255,80,255, 255,100,184, 255,120,120, 255,150,56
@@ -164,8 +149,7 @@ nomap:
 	str r0,[r6],#4
 	subs r7,r7,#4
 	bne nomap
-	mov pc,lr
-.ltorg
+	bx lr
 @---------------------------------------------------------------------------------
 paletteinit:@	r0-r3 modified.
 @---------------------------------------------------------------------------------
@@ -205,7 +189,6 @@ gloop:					@map 0bbbbbgggggrrrrr  ->  0bbbbbgggggrrrrr
 
 	ldmfd sp!,{r4-r8,lr}
 	bx lr
-.ltorg
 @---------------------------------------------------------------------------------
 gammaconvert:@	takes value in r0(0-0xFF), gamma in r1(0-4),returns new value in r0=0x1F
 @---------------------------------------------------------------------------------
@@ -225,7 +208,7 @@ PaletteTxAll:
 	stmfd sp!,{r0-r4}
 
 	@monochrome mode stuff
-	ldr r4,=ppuctrl1
+	ldr r4,=ppuCtrl1
 	ldrb r4,[r4]
 
 	mov r2,#0x1F
@@ -270,7 +253,7 @@ up8:	ldmia addy!,{r0-r7}
 PPU_init:	@only need to call once
 @---------------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	
+
 	mov r1,#0xffffff00		@build chr decode table
 	ldr r2,=CHR_DECODE
 ppi0:	mov r0,#0
@@ -338,9 +321,8 @@ ppi1:	mov r0,#0
 	mov r0,#192
 	strh r0,[r1,#REG_WIN0V]	
 	strh r0,[r1,#REG_WIN1V]
-		
+
 	ldmfd sp!,{pc}
-.ltorg
 @---------------------------------------------------------------------------------
 rescale_nr:		@r0=scale, r1=starting Y<<16
 @---------------------------------------------------------------------------------
@@ -349,16 +331,16 @@ rescale_nr:		@r0=scale, r1=starting Y<<16
 	bic r0,r0,#1
 	orr r0,r0,r2
 	str r0,scale
-	str r1,DMAlinestart			@scaletable2 never used...
-	
+	str r1,DMAlinestart			@scaleTable2 never used...
+
 	stmfd sp!,{r4-r9,globalptr,lr}
 	ldr globalptr,=globals
 	ldr r3, =0x4000
-	
+
 		add r8,r1,r3
 	mov r2,#0		@line counter
-	adr r3,scaletable
-		ldr r7,=scaletable2
+	adr r3,scaleTable
+		ldr r7,=scaleTable2
 		ldr r9,=spriteY_lookup2		@sprite need flicker too..
 	ldr r5,=spriteY_lookup
 	mov r6,#0		@zero
@@ -378,67 +360,69 @@ rs1:	movs r4,r1,asr#16
 	add r2,r2,#1
 	cmp r2,#256
 	bcc rs1
-		
+
 	mov r1,#REG_BASE	@change blend control for scaling type
-	@ldr r0,=emuflags
+	@ldr r0,=emuFlags
 	@ldr r0,[r0]
-	ldr_ r0,emuflags
+	ldr_ r0,emuFlags
 	tst r0,#ALPHALERP
 	ldrne r2,=0x08082241
 	ldreq r2,=0x10000310
 	str r2,[r1,#REG_BLDCNT]
 
 	ldmfd sp!,{r4-r9,globalptr,pc}
-.ltorg
 @---------------------------------------------------------------------------------
 PPU_reset:
 @---------------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	
+
+	mov r0,#1
+	strb_ r0,vramAddrInc
+
 	mov r0,#0
-	strb_ r0,ppuctrl0	@NMI off
-	strb_ r0,ppuctrl1	@screen off
-	strb_ r0,ppustat		@flags off
+	strb_ r0,ppuCtrl0	@NMI off
+	strb_ r0,ppuCtrl1	@screen off
+	strb_ r0,ppuStat	@flags off
 
 	mov r0,#0
 	ldr r1,=NES_VRAM
 	mov r2,#0x3000/4
-	bl filler		@clear nes VRAM
+	bl filler			@clear nes VRAM
 
 	mov r0,#0xe0
 	mov r1,#NDS_OAM
 	mov r2,#0x100
-	bl filler		@clear OAM
+	bl filler			@clear OAM
 
 	mov r0, #-1
-	ldr r1, =bank_cache
+	ldr r1, =bankCache
 	mov r2, #0x8
 	bl filler
 
 	bl paletteinit		@do palette mapping (for VS) & gamma
-	
+	bl renderInit
+
 	ldmfd sp!,{pc}
-.ltorg
 @---------------------------------------------------------------------------------
 EMU_VBlank:	@call every vblank
 @---------------------------------------------------------------------------------
 	stmfd sp!,{r4-r7,globalptr,lr}
 	ldr globalptr,=globals
 
-	ldrb_ r1,cartflags		@set cartflags(upper 4-bits (<<8, ignored) + 0000(should be zero)(<<4) + vTsM) 
+	ldrb_ r1,cartFlags		@set cartFlags(upper 4-bits (<<8, ignored) + 0000(should be zero)(<<4) + vTsM)
 	DEBUGINFO CARTFLAG, r1
 
 	ldr r0, =IPC_MEMTBL
-	ldr_ r1,memmap_tbl+16
+	ldr_ r1,m6502MemTbl+16
 	add r1, r1, #0x8000
 	str r1, [r0], #4
-	ldr_ r1,memmap_tbl+20
+	ldr_ r1,m6502MemTbl+20
 	add r1, r1, #0xA000
 	str r1, [r0], #4
-	ldr_ r1,memmap_tbl+24
+	ldr_ r1,m6502MemTbl+24
 	add r1, r1, #0xC000
 	str r1, [r0], #4
-	ldr_ r1,memmap_tbl+28
+	ldr_ r1,m6502MemTbl+28
 	add r1, r1, #0xE000
 	str r1, [r0]
 
@@ -448,13 +432,13 @@ EMU_VBlank:	@call every vblank
 	@strh r2,[r2,#REG_DM2CNT_H]
 	@strh r2,[r2,#REG_DM3CNT_H]
 
-	ldr_ r0, emuflags
+	ldr_ r0, emuFlags
 	tst r0, #SOFTRENDER
-	bne svbend
+	bne svbEnd
 
-	@ldr_ r0,=emuflags
+	@ldr_ r0,=emuFlags
 	@ldr r0,[r0]
-	ldr_ r0,emuflags
+	ldr_ r0,emuFlags
 	mov r3, #0					@reset the scale, a fake one...
 	tst r0,#NOFLICKER
 	bne ev0
@@ -462,7 +446,7 @@ EMU_VBlank:	@call every vblank
 		eor r3,r3,#1
 		str r3,scale
 ev0:
-	@ldr r0,emuflags
+	@ldr r0,emuFlags
 	@tst r0,#PALTIMING
 	@beq nopal60
 	@ldrb r0,PAL60
@@ -492,11 +476,11 @@ nopal60:
 	str r0,[r2,#REG_DM1CNT_L]		@DMA1 start
 	ldmfd sp!,{r4-r7,globalptr,pc}
 
-svbend:
-	ldr_ r0,emuflags
+svbEnd:
+	ldr_ r0,emuFlags
 	tst r0,#NOFLICKER
 	bne 0f
-	
+
 	ldr r1,scale			@for flicker scaling
 	eor r1,r1,#1
 	str r1,scale
@@ -508,17 +492,19 @@ svbend:
 	strb r3, [r2]
 0:
 	ldmfd sp!,{r4-r7,globalptr,pc}
-	.ltorg
 
-scaletable: .skip 256
-scaletable2: .skip 256
+scaleTable: .skip 256
+scaleTable2: .skip 256
 
+@---------------------------------------------------------------------------------
+PAL60: 			.byte 0
+				.align
 @---------------------------------------------------------------------------------
 ppusync:		@called on NES scanline 0..239 (r0=line)
 @---------------------------------------------------------------------------------
 	stmfd sp!,{r3,lr}
 
-	ldr_ r0, emuflags
+	ldr_ r0, emuFlags
 	tst r0, #SOFTRENDER
 	bne soft_sync
 
@@ -539,7 +525,7 @@ ppusync:		@called on NES scanline 0..239 (r0=line)
 	cmp r1, r2
 
 	ldreq_ r0, scanline
-	streq_ r0, lighty
+	streq_ r0, lightY
 	bleq soft_render
 
 	bl scanlinenext
@@ -547,7 +533,7 @@ ppusync:		@called on NES scanline 0..239 (r0=line)
 
 0:
 	ldr_ r0, scanline
-	adr_ r2,nes_chr_map
+	adr_ r2,nesChrMap
 	ldr r3,=nes_maps
 	add r3, r3, r0, lsl#4
 	ldr r1,[r2], #4
@@ -560,21 +546,21 @@ ppusync:		@called on NES scanline 0..239 (r0=line)
 	str r1,[r3]
 
 	bl updateBGCHR		@check for bankswitching
-		
+
 	ldr r1,scale
 	ldr r2,DMAline
 	add r2,r2,r1
 	str r2,DMAline
-	
+
 	movs r0,r2,asr#16
 	movmi r0,#0
 	ldr r1, =0x3334
 	add r2,r2,r1
 	movs r1,r2,asr#16
 	movmi r1,#0			@r0,r1=scaled line
-	
+
 	@- - - 
-	
+
 	ldr r12,=DISPCNTBUFF
 	add r12,r12,r0,lsl#2
 	ldr r2,dispcnt
@@ -589,24 +575,24 @@ ppusync:		@called on NES scanline 0..239 (r0=line)
 		add lr,r12,r1,lsl#4
 		add lr, lr, #256*16
 	add r12,r12,r0,lsl#4
-		
+
 	ldr r2,currentBG
 	and r2, r2, #0x7F
-	ldr_ r3,bg0cnt
+	ldr_ r3,bg0Cnt
 	orr r2,r3,r2,lsr#1
 	strh r2,[r12]
 		strh r2,[r12, #2] @nothing happens
 		strh r2,[lr]
 		strh r2,[lr, #2]
-	
+
 	@- - -
-	
+
 	ldr_ r2,scrollX
 	strh r2,[r12,#8]
 		strh r2,[lr,#8]
 		strh r2,[r12,#12]
 		strh r2,[lr,#12]
-	
+
 	ldr_ r2,scrollY
 	sub r3,r2,r0
 	strh r3,[r12,#10]
@@ -614,18 +600,18 @@ ppusync:		@called on NES scanline 0..239 (r0=line)
 		sub r3,r2,r1
 		strh r3,[lr,#10]
 		strh r3,[r12,#14]
-	
+
 	add r2,r2,#1
 	tst r2,#0xff
 	eoreq r2,r2,#0x100	@page wraps with negative scroll
 	cmp r2,#0xf0
 	cmpne r2,#0x1f0
 	addeq r2,r2,#16
-	
+
 	str_ r2,scrollY
 
 	@- - -
-	ldr_ r0, emuflags
+	ldr_ r0, emuFlags
 	tst r0, #0x40		@sprite render type
 	beq 0f
 	stmfd sp!, {r4-r12}
@@ -633,12 +619,12 @@ ppusync:		@called on NES scanline 0..239 (r0=line)
 	ldmfd sp!, {r4-r12}
 0:
 	@- - -
-	ldr_ r0, emuflags
+	ldr_ r0, emuFlags
 	tst r0, #PALSYNC
 	beq no_sync
 
 	ldr_ r0, scanline
-	ldr_ r1, palsyncline
+	ldr_ r1, palSyncLine
 	cmp r0, r1
 	bne no_sync
 
@@ -648,7 +634,7 @@ ppusync:		@called on NES scanline 0..239 (r0=line)
 	cmp r0, #232
 	bcs no_sync
 
-	adr r2, scaletable
+	adr r2, scaleTable
 	ldrb r0, [r2, r0]
 	cmp r0, #0
 	beq no_sync
@@ -690,7 +676,7 @@ no_sync:
 	ldmfd sp!,{r3,pc}
 @---
 soft_sync:
-	ldr_ r0, emuflags
+	ldr_ r0, emuFlags
 	DEBUGINFO 20, r0
 
 	stmfd sp!, {r4-r12}
@@ -701,13 +687,11 @@ soft_sync:
 	ldmfd sp!, {r4-r12}
 	ldmfd sp!,{r3,pc}
 
-.ltorg
-
 gfx_scale:
 scale: .word 0			@bit0=even/odd
 DMAline: .word 0
 DMAlinestart: .word 0
-	
+
 @---------------------------------------------------------------------------------
 PPU_R:@
 @---------------------------------------------------------------------------------
@@ -717,12 +701,12 @@ PPU_R:@
 PPU_read_tbl:
 	.word empty_PPU_R	@$2000
 	.word empty_PPU_R	@$2001
-	.word stat_R	@$2002
+	.word stat_R		@$2002
 	.word empty_PPU_R	@$2003
 	.word empty_PPU_R	@$2004
 	.word empty_PPU_R	@$2005
 	.word empty_PPU_R	@$2006
-	.word vmdata_R	@$2007
+	.word vmdata_R		@$2007
 @---------------------------------------------------------------------------------
 PPU_W:@
 @---------------------------------------------------------------------------------
@@ -730,40 +714,40 @@ PPU_W:@
 	ldr pc,[pc,r2,lsl#2]
 	.word 0
 PPU_write_tbl:
-	.word ctrl0_W	@$2000
-	.word ctrl1_W	@$2001
-	.word void	@$2002
-	.word void	@$2003
-	.word void	@$2004
+	.word ctrl0_W		@$2000
+	.word ctrl1_W		@$2001
+	.word void			@$2002
+	.word void			@$2003
+	.word void			@$2004
 	.word bgscroll_W	@$2005
-	.word vmaddr_W	@$2006
-	.word vmdata_W	@$2007
+	.word vmaddr_W		@$2006
+	.word vmdata_W		@$2007
 @---------------------------------------------------------------------------------
 empty_PPU_R:
 @---------------------------------------------------------------------------------
 	mov r0,#0
-	mov pc,lr
+	bx lr
 @---------------------------------------------------------------------------------
 ctrl0_W:		@(2000)
 @---------------------------------------------------------------------------------
 	stmfd sp!,{lr}
-	
+
 	ldr_ r1, loopy_t
 	bic r1, r1, #0xC00
 	and r2, r0, #3
 	orr r1, r1, r2, lsl#10
 	str_ r1, loopy_t
 
-	strb_ r0,ppuctrl0
+	strb_ r0,ppuCtrl0
 
 	mov r1,#1				@+1/+32
 	tst r0,#4
 	movne r1,#32
-	strb_ r1,vramaddrinc
+	strb_ r1,vramAddrInc
 
 	mov r1,r0,lsr#1
 	and r1,r1,#1
-	strb_ r1,scrollYtemp+1	@Y scroll
+	strb_ r1,scrollYTemp+1	@Y scroll
 
 	and r0,r0,#1			@X scroll
 	strb_ r0,scrollX+1
@@ -771,14 +755,14 @@ ctrl0_W:		@(2000)
 @---------------------------------------------------------------------------------
 ctrl1_W:		@(2001)
 @---------------------------------------------------------------------------------
-	strb_ r0,ppuctrl1
+	strb_ r0,ppuCtrl1
 
 	ldr r1,=DISPCNT_INIT
 
 	tst r0,#0x08		@bg en?
 	beq cr10
 
-	ldr_ r2,emuflags
+	ldr_ r2,emuFlags
 	tst r2,#ALPHALERP
 	orrne r1,r1,#0x0300
 	orreq r1,r1,#0x0100
@@ -790,9 +774,9 @@ cr10:
 	orreq r1,r1,#0x2000
 	tst r0,#0x04		@obj clip
 	orreq r1,r1,#0x4000
-		
+
 	str r1,dispcnt
-	mov pc,lr
+	bx lr
 .ltorg
 
 dispcnt: .word DISPCNT_INIT
@@ -801,44 +785,45 @@ stat_R:		@(2002)
 @---------------------------------------------------------------------------------
 	mov r0,#0
 	strb_ r0,toggle
-	ldrb_ r2,ppustat
-	
-	ldr_ r0, emuflags
+	ldrb_ r2,ppuStat
+
+	ldr_ r0, emuFlags
 	tst r0, #SOFTRENDER
 	bne 0f
 
-	ldr_ r0,sprite0y			@sprite0 hit?
+	ldr_ r0,sprite0Y			@sprite0 hit?
 	ldr_ r1,scanline
 	cmp r1,r0
-@	ble nosprh
-@	ldrb r0,sprite0x			@for extra high resolution sprite0 hit
-@	ldr r1,cyclesperscanline	@the store is in IO.s
+@	ble noSprH
+@	ldrb r0,sprite0X			@for extra high resolution sprite0 hit
+@	ldr r1,cyclesPerScanline	@the store is in IO.s
 @	sub r1,r1,cycles
 @	cmp r1,r0
 	bic r2, #0x40
 	orrhi r2,r2,#0x40
-@nosprh
+@noSprH
 0:
 	bic r1,r2,#0x80				@vbl flag clear
-	strb_ r1,ppustat
+	strb_ r1,ppuStat
 
 	mov r0, r2
 
-	ldrb_ r1, ppuctrl1
+	ldrb_ r1, ppuCtrl1
 	tst r1, #0x10
 	biceq r0, #0x60
 
-	mov pc,lr
+	bx lr
 @---------------------------------------------------------------------------------
 bgscroll_W:	@(2005)
 @---------------------------------------------------------------------------------
 	ldrb_ r1,toggle
 	eors r1,r1,#1
 	strb_ r1,toggle
-	beq bgscrollY
-bgscrollX:
+	beq bgScrollY
+
+bgScrollX:
 	strb_ r0,scrollX
-	
+
 	and r1, r0, #7
 	str_ r1, loopy_x	@loopy_x = data & 0x07
 	str_ r1, loopy_shift
@@ -847,29 +832,29 @@ bgscrollX:
 	orr r1, r1, r0, lsr#3
 	str_ r1, loopy_t
 
-	mov pc,lr
-bgscrollY:
-	strb_ r0,scrollYtemp
+	bx lr
+
+bgScrollY:
+	strb_ r0,scrollYTemp
+
+	and r2, r0, #0xF8
+	and r0, r0, #7
 
 	ldr_ r1,loopy_t
-	bic r1, r1, #0x3E0
+	bic r1, r1, #0x03E0
 	bic r1, r1, #0x7000
-	and r2, r0, #7
-	orr r1, r1, r2, lsl#12
-	and r2, r0, #0xF8
 	orr r1, r1, r2, lsl#2
+	orr r1, r1, r0, lsl#12
 	str_ r1, loopy_t
 
-	ldr_ r1,vramaddr2	@yscroll modifies vramaddrtmp
-	bic r1,r1,#0x7300
-	bic r1,r1,#0x00e0
-	and r2,r0,#0xf8
-	and r0,r0,#7
+	ldr_ r1,vramAddr2	@yscroll modifies vramAddrTmp
+	bic r1,r1,#0x03E00
+	bic r1,r1,#0x7000
 	orr r1,r1,r2,lsl#2
 	orr r1,r1,r0,lsl#12
-	str_ r1,vramaddr2
+	str_ r1,vramAddr2
 
-	mov pc,lr
+	bx lr
 @---------------------------------------------------------------------------------
 vmaddr_W:	@(2006)
 @---------------------------------------------------------------------------------
@@ -879,9 +864,9 @@ vmaddr_W:	@(2006)
 	beq low
 high:
 	and r0,r0,#0x3f
-	strb_ r0,vramaddr2+1
+	strb_ r0,vramAddr2+1
 	strb_ r0, loopy_t + 1
-	mov pc,lr
+	bx lr
 low:
 	strb_ r0, loopy_t
 	ldr_ r1, loopy_t
@@ -889,9 +874,9 @@ low:
 	ldr_ r1, loopy_x
 	str_ r1, loopy_shift
 
-	strb_ r0,vramaddr2
-	ldr_ r1,vramaddr2
-	str_ r1,vramaddr
+	strb_ r0,vramAddr2
+	ldr_ r1,vramAddr2
+	str_ r1,vramAddr
 
 	and r0,r1,#0x7000	@r0=fine Y
 	and r2,r1,#0x03e0	@r2=coarse Y
@@ -900,7 +885,7 @@ low:
 	orr r0,r0,r2,lsr#2
 	orr r0,r0,addy,lsr#3
 	str_ r0,scrollY
-	str_ r0,scrollYtemp
+	str_ r0,scrollYTemp
 
 	ldrb_ r0,scrollX
 	and r0,r0,#7		@r0=fine X
@@ -910,18 +895,18 @@ low:
 	orr r0,r0,addy,lsr#2
 	str_ r0,scrollX
 
-	mov pc,lr
+	bx lr
 @---------------------------------------------------------------------------------
 vmdata_R:	@(2007)
 @---------------------------------------------------------------------------------
-	ldr_ r0,vramaddr
-	ldrb_ r1,vramaddrinc
+	ldr_ r0,vramAddr
+	ldrb_ r1,vramAddrInc
 	bic r0,r0,#0xfc000
 	add r2,r0,r1
-	str_ r2,vramaddr
+	str_ r2,vramAddr
 
 	cmp r0,#0x3f00
-	bhs palread
+	bhs palRead
 
 	and r1,r0,#0x3c00
 	adr r2,vram_map
@@ -929,28 +914,28 @@ vmdata_R:	@(2007)
 	bic r0,r0,#0xfc00
 
 	ldrb r1,[r1,r0]
-	ldrb_ r0,readtemp
-	str_ r1,readtemp
-	mov pc,lr
-palread:
+	ldrb_ r0,readTemp
+	str_ r1,readTemp
+	bx lr
+palRead:
 	and r0,r0,#0x1f
 	adr r1,nes_palette
 	ldrb r0,[r1,r0]
-	mov pc,lr
+	bx lr
 @---------------------------------------------------------------------------------
-vmdata_W:	@(2007)				@Do not change addy...
+vmdata_W:	@ (2007)			@Do not change addy...
 @---------------------------------------------------------------------------------
-	ldr_ addy,vramaddr
-	ldrb_ r1,vramaddrinc
+	ldr_ addy,vramAddr
+	ldrb_ r1,vramAddrInc
 	bic addy,addy,#0xfc000 @AND $3fff
 	add r2,addy,r1
-	str_ r2,vramaddr
+	str_ r2,vramAddr
 
 	and r1,addy,#0x3c00
 	adr r2,vram_write_tbl
 	ldr pc,[r2,r1,lsr#8]
 @---------------------------------------------------------------------------------
-VRAM_chr:@	0000-1fff
+VRAM_chr:	@ 0000-1fff
 @---------------------------------------------------------------------------------
 	ldr r2,=vram_map
 	mov r1, addy, lsr#10
@@ -958,7 +943,7 @@ VRAM_chr:@	0000-1fff
 	bic r1, addy, #0xFC00
 	strb r0,[r2,r1]
 					@because some games may switch off/in VRAM(0000-1fff)
-	mov pc,lr
+	bx lr
 @---------------------------------------------------------------------------------
 VRAM_name0:	@(2000-23ff)
 @---------------------------------------------------------------------------------
@@ -968,15 +953,15 @@ writeBG:		@loadcart jumps here
 	bic addy,addy,#0xfc00	@AND $03ff
 	strb r0,[r1,addy]
 	cmp addy,#0x3c0
-	bhs writeattrib
+	bhs writeAttrib
 @writeNT
 	add addy,addy,addy	@lsl#1
 	ldrh r1,[r2,addy]	@use old color
 	and r1,r1,#0xf000
 	orr r1,r0,r1
 	strh r1,[r2,addy]	@write tile#
-	mov pc,lr
-writeattrib:
+	bx lr
+writeAttrib:
 	stmfd sp!,{r3,r4,lr}
 
 	orr r0,r0,r0,lsl#16
@@ -1024,7 +1009,7 @@ writeattrib:
 		orr r1,r1,r2,lsl#6
 		str r1,[addy,#0xc4]
 	ldmfd sp!,{r3,r4,lr}
-	mov pc, lr
+	bx lr
 @---------------------------------------------------------------------------------
 VRAM_name1:	@(2400-27ff)
 @---------------------------------------------------------------------------------
@@ -1054,7 +1039,7 @@ VRAM_pal:	@($3F00-$3F1F)
 		tst addy,#0x0f
 		moveq addy,#0	@$10 mirror to $00
 	adr r1,nes_palette
-	orr r2, r0, #128 + 64	@something wrong...
+	orr r2, r0, #0xc0	@something wrong...
 	strb r2,[r1,addy]	@store in nes palette
 
 	tst addy, #3
@@ -1080,10 +1065,8 @@ VRAM_pal:	@($3F00-$3F1F)
 
 	ldr_ r1, scanline
 	add r1, r1, #2
-	str_ r1, palsyncline
-	mov pc, lr
-@------------
-.ltorg
+	str_ r1, palSyncLine
+	bx lr
 @---------------------------------------------------------------------------------
 newframe:	@called at NES scanline 0	(r0-r9 safe to use)
 @---------------------------------------------------------------------------------
@@ -1096,17 +1079,17 @@ newframe:	@called at NES scanline 0	(r0-r9 safe to use)
 	str_ r0, loopy_y
 	ldr_ r0, loopy_x
 	str_ r0, loopy_shift
-	ldr_ r0,scrollYtemp
+	ldr_ r0,scrollYTemp
 	str_ r0,scrollY
 
 	mov r0, #0
-	str_ r0, palsyncline
+	str_ r0, palSyncLine
 
-	ldr_ r0, emuflags
+	ldr_ r0, emuFlags
 	tst r0, #SOFTRENDER
 	bne nfsoft
 
-	ldr_ r0, vrombase
+	ldr_ r0, vromBase
 	ldr r1, =NES_VRAM
 	cmp r0, r1		@means that the game does NOT have any vrom.
 	bne 0f
@@ -1127,11 +1110,11 @@ newframe:	@called at NES scanline 0	(r0-r9 safe to use)
 	ldr r0,DMAlinestart	@init scaling stuff
 	str r0,DMAline
 
-	ldr_ r0, emuflags
+	ldr_ r0, emuFlags
 	tst r0, #0x40			@sprite render type
 	bleq updateOBJCHR		@(nes_zpage still valid here)
 @------------------------
-	ldr_ r0, emuflags
+	ldr_ r0, emuFlags
 	tst r0, #PALSYNC
 	beq 1f
 	ldr r3, =0x4000006
@@ -1155,11 +1138,11 @@ nf8:	ldmia addy!,{r0-r7}
 	bne nf8			@(2nd pass: sprite pal)
 @-----------------------
 nfsoft:
-	ldr_ r0,scrollYtemp
+	ldr_ r0,scrollYTemp
 	str_ r0,scrollY
 
 	ldmfd sp!,{r3-r9, lr}
-	ldr_ pc, newframehook
+	ldr_ pc, newFrameHook
 .ltorg
 @---------------------------------------------------------------------------------
 agb_pal:		.skip 32*2	@copy this to real AGB palette every frame
@@ -1246,14 +1229,14 @@ mirror_xram_0000:
 mirror4_:
 	adr r0,m0123
 mirrorchange:
-	ldrb_ r1,cartflags
+	ldrb_ r1,cartFlags
 	tst r1,#SCREEN4+VS
 	ldrne r0,=m0123		@force 4way mirror for SCREEN4 or VS flags
 
 	stmfd sp!,{r3-r5,lr}
 
 		ldmia r0!,{r1}
-		str_ r1,bg0cnt
+		str_ r1,bg0Cnt
 		
 		ldr r1,=nes_nt0
 		ldmia r0!,{r2-r5}
@@ -1288,18 +1271,18 @@ resetCHR:	@initialize CHR  - used by loadcart
 	str r0,[r1],#4
 	str r0,[r1],#4
 	str r0,[r1],#4
-	
+
 	mov r0,#0
 	DEBUGINFO BGMISS,r0
 	str r0,currentBG
 	str r0,nextBG
-	
+
 	mov r0,#0
-	strb_ r0,ppuctrl0	@BG gets tileset 0 (ensures first banks get cached first for chr-ram)
+	strb_ r0,ppuCtrl0	@BG gets tileset 0 (ensures first banks get cached first for chr-ram)
 	mov r0,#0	
 	bl chr01234567_		@default CHR mapping
 	bl updateBGCHR
-	
+
 	ldmfd sp!,{pc}
 @---------------------------------------------------------------------------------
 writeCHRTBL: .word chr0_,chr1_,chr2_,chr3_,chr4_,chr5_,chr6_,chr7_
@@ -1328,14 +1311,14 @@ chr6_:
 chr7_:
 	mov r1,#7
 chr1k:
-	ldr_ r2,vrommask
+	ldr_ r2,vromMask
 	and r0,r0,r2,lsr#10
 
-	adr_ r2,nes_chr_map
+	adr_ r2,nesChrMap
 	add r2, r2, r1, lsl#1
 	strh r0,[r2]
-	
-	ldr_ r2,vrombase
+
+	ldr_ r2,vromBase
 	add r0,r2,r0,lsl#10
 	ldr r2,=vram_map
 	str r0,[r2,r1,lsl#2]
@@ -1354,18 +1337,18 @@ chr67_:
 	mov r1,#6
 	@b chr2k
 chr2k:
-	ldr_ r2,vrommask
+	ldr_ r2,vromMask
 	and r0,r0,r2,lsr#11
 
 	mov r0,r0,lsl#1
-	adr_ r2,nes_chr_map
+	adr_ r2,nesChrMap
 	add r2, r2, r1, lsl#1
 	strh r0,[r2]
 	orr r0,r0,#1
 	strh r0,[r2,#2]
 	bic r0, r0, #1
-	
-	ldr_ r2,vrombase
+
+	ldr_ r2,vromBase
 	add r0,r2,r0,lsl#10
 	ldr r2,=vram_map
 	str r0,[r2,r1,lsl#2]!
@@ -1375,18 +1358,18 @@ chr2k:
 @---------------------------------------------------------------------------------
 chr0123_:
 @---------------------------------------------------------------------------------
-	ldr_ r2,vrommask
+	ldr_ r2,vromMask
 	and r0,r0,r2,lsr#12
 
 	orr r1,r0,r0,lsl#16
 	mov r1, r1, lsl#2
 	orr r2, r1, #0x00010000
-	str_ r2,nes_chr_map
+	str_ r2,nesChrMap
 	ldr r2,=0x00030002
 	orr r2,r1,r2
-	str_ r2,nes_chr_map+4
+	str_ r2,nesChrMap+4
 
-	ldr_ r1,vrombase
+	ldr_ r1,vromBase
 	add r1,r1,r0,lsl#12
 	str r1,vram_map
 	add r1,r1,#0x400
@@ -1399,24 +1382,24 @@ chr0123_:
 @---------------------------------------------------------------------------------
 chr01234567_:
 @---------------------------------------------------------------------------------
-	ldr_ r2,vrommask
+	ldr_ r2,vromMask
 	and r0,r0,r2,lsr#13
 
 	orr r1,r0,r0,lsl#16
 	mov r1, r1, lsl#3
 	orr r2, r1, #0x00010000
-	str_ r2,nes_chr_map
+	str_ r2,nesChrMap
 	ldr r2,=0x00030002
 	orr r2,r1,r2
-	str_ r2,nes_chr_map+4
+	str_ r2,nesChrMap+4
 	ldr r2,=0x00050004
 	orr r2,r1,r2
-	str_ r2,nes_chr_map+8
+	str_ r2,nesChrMap+8
 	ldr r2,=0x00070006
 	orr r2,r1,r2
-	str_ r2,nes_chr_map+12
+	str_ r2,nesChrMap+12
 
-	ldr_ r1,vrombase
+	ldr_ r1,vromBase
 	add r1,r1,r0,lsl#13
 	str r1,vram_map
 	add r1,r1,#0x400
@@ -1430,18 +1413,18 @@ chr01234567_:
 @---------------------------------------------------------------------------------
 chr4567_:
 @---------------------------------------------------------------------------------
-	ldr_ r2,vrommask
+	ldr_ r2,vromMask
 	and r0,r0,r2,lsr#12
 
 	orr r1,r0,r0,lsl#16
 	mov r1, r1, lsl#2
 	orr r2, r1, #0x00010000
-	str_ r2,nes_chr_map+8
+	str_ r2,nesChrMap+8
 	ldr r2,=0x00030002
 	orr r2,r1,r2
-	str_ r2,nes_chr_map+12
+	str_ r2,nesChrMap+12
 
-	ldr_ r1,vrombase
+	ldr_ r1,vromBase
 	add r1,r1,r0,lsl#12
 _4567:	str r1,vram_map+16
 	add r1,r1,#0x400
@@ -1455,20 +1438,20 @@ _4567:	str r1,vram_map+16
 @---------------------------------------------------------------------------------
 updateBGCHR:	@see if BG CHR needs to change, setup BGxCNTBUFF
 @---------------------------------------------------------------------------------
-	ldrb_ r2,ppuctrl0
+	ldrb_ r2,ppuCtrl0
 	tst r2,#0x10
 	stmfd sp!,{r2-r9, lr}
-	ldreq_ r0,nes_chr_map
-	ldreq_ r8,nes_chr_map+4
-	ldrne_ r0,nes_chr_map+8	@r0=new bg chr group
-	ldrne_ r8,nes_chr_map+12
+	ldreq_ r0,nesChrMap
+	ldreq_ r8,nesChrMap+4
+	ldrne_ r0,nesChrMap+8	@r0=new bg chr group
+	ldrne_ r8,nesChrMap+12
 
 	bl bg_chr_req
 	ldmfd sp!,{r2-r9, pc}
 @---------------------------------------------------------------------------------
 updateOBJCHR:	@sprite CHR update (r3-r7 killed)
 @---------------------------------------------------------------------------------
-	ldrb_ r2,ppuctrl0frame
+	ldrb_ r2,ppuCtrl0Frame
 	tst r2,#0x20	@8x16?
 	beq uc3
 	mov r12,lr
@@ -1479,28 +1462,28 @@ uc3:
 	tst r2,#0x08
 	bne uc2
 uc1:
-	ldr_ r0,nes_chr_map
-	ldr_ r8,nes_chr_map + 4
+	ldr_ r0,nesChrMap
+	ldr_ r8,nesChrMap + 4
 	ldr r1,agb_obj_map
 	ldr r9,agb_obj_map + 4
 	eor r1,r1,r0
 	eor r9,r9,r8
 	orrs r2, r1, r9
-	moveq pc, lr
+	bxeq lr
 	str r0,agb_obj_map
 	str r8,agb_obj_map + 4
 	ldr r5,=NDS_OBJVRAM
 	adr r6,agb_obj_map
 	b unpack_tiles
 uc2:
-	ldr_ r0,nes_chr_map+8
-	ldr_ r8,nes_chr_map+12
+	ldr_ r0,nesChrMap+8
+	ldr_ r8,nesChrMap+12
 	ldr r1,agb_obj_map+8
 	ldr r9,agb_obj_map+12
 	eor r9,r9,r8
 	eor r1,r1,r0
 	orrs r2, r1, r9
-	moveq pc,lr
+	bxeq lr
 	str r0,agb_obj_map+8
 	str r8,agb_obj_map+12
 	ldr r5,=NDS_OBJVRAM+0x2000
@@ -1521,7 +1504,7 @@ bcr0:	ldr r1,[r2],#4
 	beq cached
 	cmp r2,r3
 	bne bcr0
-	
+
 	DEBUGCOUNT BGMISS
 
 	ldr r7,nextBG			@r7=group to replace
@@ -1536,7 +1519,7 @@ bcr0:	ldr r1,[r2],#4
 	eor r1,r1,r0
 	eor r9,r9,r8
 
-	
+
 decodeptr	.req r2 @mem_chr_decode
 tilecount  .req r3
 nesptr		.req r4 @chr src
@@ -1555,7 +1538,7 @@ bg0:	 movs r0, r1, lsl#16
 	 addeq agbptr,agbptr,#0x800
 	 beq bg2
 	 mov tilecount,#64
-	 ldr_ nesptr,vrombase
+	 ldr_ nesptr,vromBase
 	 add nesptr,nesptr,r0,lsl#10	@bank#*$400
 
 bg1:	  ldrb r0,[nesptr],#1
@@ -1578,7 +1561,7 @@ bg0_:	 movs r0, r9, lsl#16
 	 addeq agbptr,agbptr,#0x800
 	 beq bg2_
 	 mov tilecount,#64
-	 ldr_ nesptr,vrombase
+	 ldr_ nesptr,vromBase
 	 add nesptr,nesptr,r0,lsl#10	@bank#*$400
 
 bg1_:	  ldrb r0,[nesptr],#1
@@ -1595,17 +1578,17 @@ bg1_:	  ldrb r0,[nesptr],#1
 bg2_:	tst bankptr,#3
 	bne bg0_
 
-	mov pc,lr
+	bx lr
 
 cached: @--------------
 	sub r2,r2,#8
 	sub r7,r2,r6	@r7=group#*8
 	str r7,currentBG
-	mov pc,lr
+	bx lr
 
 
 @---------------------------------------------------------------------------------
-spmask:
+spMask:
 	.skip 256 * 4
 @--------------------------------------------
 spchr_update:
@@ -1627,7 +1610,7 @@ spchr_update:
 
 	mov r2, #240/4
 	mov r1, #0
-	ldr r0, =spmask
+	ldr r0, =spMask
 masklp:
 	str r1, [r0], #4
 	subs r2, r2, #1
@@ -1638,13 +1621,13 @@ masklp:
 	mov r6, #0x200
 	mov r3, #0xE0
 	str r3, [r5, #-8]
-	ldr r0, =spmask
+	ldr r0, =spMask
 
-@for sprite0y
+@for sprite0Y
 	ldrb r1, [r9], #4
 	cmp r1, #239
 	strcs r6, [r5]
-	strcs_ r6, sprite0y
+	strcs_ r6, sprite0Y
 	add r4, r1, #1
 	strb r4, [r0, r4]
 	add r5, r5, #8
@@ -1663,13 +1646,13 @@ msplp:
 	str r1, [r0, #239]
 	str r1, [r0, #240]
 
-	ldr_ r0, emuflags
+	ldr_ r0, emuFlags
 	tst r0, #ALLPIXEL
 	beq hidesp
 
-	ldr_ r0, pixstart
+	ldr_ r0, pixStart
 	cmp r0, #0
-	moveq pc, lr
+	bxeq lr
 
 hidesp:
 	ldr r3, =NES_SPRAM
@@ -1685,17 +1668,17 @@ hidesp_loop:
 	subs r1, r1, #1
 	bne hidesp_loop
 
-	mov pc, lr
+	bx lr
 
 0:
-	ldr_ r2, pixstart
+	ldr_ r2, pixStart
 	cmp r2, #0
 	bne 1f
 
 	cmp r3, #239		@r3 = scanline
 	bne 1f
 
-	ldr_ r2, emuflags
+	ldr_ r2, emuFlags
 	tst r2, #ALLPIXEL
 	beq 1f
 
@@ -1704,18 +1687,18 @@ hidesp_loop:
 	mov lr, r5
 
 1:
-	ldrb_ r0, ppuctrl1
+	ldrb_ r0, ppuCtrl1
 	tst r0, #0x10
-	moveq pc, lr
+	bxeq lr
 
 	ldr r5, =CHR_DECODE
 	ldr_ r3, scanline
 	mov r8, #0
 
-	ldr r1, =spmask
+	ldr r1, =spMask
 	ldr r0, [r1, r3]
 	ands r0, r0, r0
-	moveq pc, lr
+	bxeq lr
 
 	stmfd sp!, {lr}
 
@@ -1735,7 +1718,7 @@ splp:
 	bne 0f			@check sprite0
 
 	stmfd sp!, {r0-r5, r11}
-	ldrb_ r3, ppuctrl0
+	ldrb_ r3, ppuCtrl0
 	tst r3, #0x20
 	bne sp160
 sp80:
@@ -1813,8 +1796,8 @@ sp0lp162:
 sp0end:
 	@ldrb r1, [r9]
 	@cmp r0, r1
-	@strne_ r0, sprite0y
-	str_ r0, sprite0y
+	@strne_ r0, sprite0Y
+	str_ r0, sprite0Y
 	ldmfd sp!, {r0-r5, r11}
 0:
 
@@ -1842,17 +1825,17 @@ sp0end:
 	tst r2, #0x20
 	orrne r0, r0, #(1 << 10)
 
-	ldrb_ r1, ppuctrl0
+	ldrb_ r1, ppuCtrl0
 	tst r1, #0x20
 	orrne r0, r0, #0x8000
 	strh r0, [r12]			@set cordinate y
 	bne sp16
 sp8:
 	ldrb r0, [r9, #1]
-	
+
 	adr lr, 0f
 	adr r12, 1f
-	ldr_ pc, ppuchrlatch		@r4 returns the new ptr	r1 = ppuctrl0, r0 = tile#
+	ldr_ pc, ppuChrLatch		@r4 returns the new ptr	r1 = ppuCtrl0, r0 = tile#
 0:	
 
 	and r2, r1, #0x08
@@ -2003,28 +1986,28 @@ spflick_table16:
 @---------------------------------------------------------------------------------
 vromnt1k:	@r1=nt0...3
 @---------------------------------------------------------------------------------
-	adr r2, bank_cache
+	adr r2, bankCache
 	add r2, r2, r1, lsl#1		@two bytes...
 	ldrh r2, [r2]
 	cmp r0, r2
-	moveq pc, lr
+	bxeq lr
 
 	stmfd sp!, {r3-r9, lr}
 
-	adr r2, bank_cache
+	adr r2, bankCache
 	add r2, r2, r1, lsl#1
 	strh r0, [r2]
 
-	ldr_ r3, vrombase
+	ldr_ r3, vromBase
 	ldr r2, =NDS_BG + 0x2000		@point to a free Map area.
 	add r2, r2, r1, lsl#11
 	add r4, r3, r0, lsl#10
 
 	add r6, r4, #0x3C0			@the tile attr base.
-	adr r7, ntdata
+	adr r7, ntData
 	mov r9, #8*8
 
-nt_loop:
+ntLoop:
 	ldrb r8, [r6], #1
 	and r0, r8, #3
 	strb r0, [r7]
@@ -2042,13 +2025,13 @@ nt_loop:
 	tst r9, #7				@one row will be 8 bytes
 	addne r7, r7, #2
 	addeq r7, r7, #18
-	b nt_loop
-	
+	b ntLoop
+
 0:
 	mov r6, #0
-	adr r7, ntdata
+	adr r7, ntData
 
-tilenum_loop:
+tilenumLoop:
 	mov r1, r6, lsr#6
 	and r0, r6, #0x1e
 	mov r0, r0, lsr#1
@@ -2061,14 +2044,14 @@ tilenum_loop:
 	strh r0, [r2], #2
 	add r6, r6, #1
 	cmp r6, #32*30
-	bcc tilenum_loop
+	bcc tilenumLoop
 
 	ldmfd sp!, {r3-r9, pc}
 
 @---------------------------------------------------------------------------------
-bank_cache:
+bankCache:
 	.skip 8
-ntdata:
+ntData:
 	.skip 8*8*2*2
 
 @---------------------------------------------------------------------------------

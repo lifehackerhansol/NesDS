@@ -1,6 +1,4 @@
 @---------------------------------------------------------------------------------
-.section .text,"ax"
-@---------------------------------------------------------------------------------
 	#include "equates.h"
 @---------------------------------------------------------------------------------
 	.global mapper225init
@@ -9,11 +7,13 @@
 	.global mapper229init
 	.global mapper230init
 	.global mapper231init
-	tmp = mapperdata
-	tmp1 = mapperdata + 4
-	reg0 = mapperdata + 8
-	reg1 = mapperdata + 12
-	tmp2 = mapperdata + 16
+	tmp = mapperData
+	tmp1 = mapperData + 4
+	reg0 = mapperData + 8
+	reg1 = mapperData + 12
+	tmp2 = mapperData + 16
+@---------------------------------------------------------------------------------
+.section .text,"ax"
 @---------------------------------------------------------------------------------
 mapper225init:
 @---------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ mapper231init:
 	.word w231, w231, w231, w231
 	
 	stmfd sp!, {lr}
-	ldr_ r1, vrommask
+	ldr_ r1, vromMask
 	tst r1, #0x80000000
 	moveq r0, #0
 	bleq chr01234567_
@@ -222,7 +222,7 @@ w227_8:
 	ldmfd sp!, {lr}
 	ldr_ r1, tmp
 	tst r1, #0x80
-	movne pc, lr
+	bxne lr
 	ldr_ r0, tmp1
 	and r0, r0, #0x1C
 	mov r0, r0, lsl#1

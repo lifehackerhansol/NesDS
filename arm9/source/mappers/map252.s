@@ -1,22 +1,22 @@
 @---------------------------------------------------------------------------------
-.section .text,"ax"
-@---------------------------------------------------------------------------------
 	#include "equates.h"
 	#include "M6502mac.h"
 @---------------------------------------------------------------------------------
 	.global mapper252init
-	reg	= mapperdata+0
-	reg0	= mapperdata+0
-	reg1	= mapperdata+1
-	reg2	= mapperdata+4
-	reg3	= mapperdata+5
-	reg4	= mapperdata+8
-	reg5	= mapperdata+9
-	reg6	= mapperdata+12
-	reg7	= mapperdata+13
-	irq_enable = mapperdata+16
-	irq_counter= mapperdata+17
-	irq_latch = mapperdata+18
+	reg	= mapperData+0
+	reg0	= mapperData+0
+	reg1	= mapperData+1
+	reg2	= mapperData+4
+	reg3	= mapperData+5
+	reg4	= mapperData+8
+	reg5	= mapperData+9
+	reg6	= mapperData+12
+	reg7	= mapperData+13
+	irq_enable = mapperData+16
+	irq_counter= mapperData+17
+	irq_latch = mapperData+18
+@---------------------------------------------------------------------------------
+.section .text,"ax"
 @---------------------------------------------------------------------------------
 mapper252init:
 @---------------------------------------------------------------------------------
@@ -32,20 +32,20 @@ mapper252init:
 	str_ r0, reg + 12
 
 	adr r0, hook
-	str_ r0, scanlinehook
+	str_ r0, scanlineHook
 
 	stmfd sp!, {lr}
 	
 	mov r0, #0
 	bl chr01234567_
 
-	ldr r0,=VRAM_chr		@enable/disable chr write
-	ldr r1,=vram_write_tbl		@ set the first 8 function pointers to 'void'?
+	ldr r0,=VRAM_chr		@enable chr write
+	ldr r1,=vram_write_tbl
 	mov r2,#8
 	bl filler
 
-	adr r0, framehook
-	str_ r0, newframehook
+	adr r0, frameHook
+	str_ r0, newFrameHook
 
 	ldmfd sp!, {pc}
 
@@ -53,7 +53,7 @@ mapper252init:
 write89:
 	tst addy, #0x1000
 	beq map89_
-	mov pc, lr
+	bx lr
 
 @---------------------------------------------------------------------------------
 writeAB:
@@ -144,34 +144,34 @@ w0:
 	bic r1, r1, #0xF
 	orr r1, r1, r0
 	strb_ r1, irq_latch
-	mov pc, lr
+	bx lr
 w1:
 	ldrb_ r1, irq_latch
 	and r0, r0, #0xF
 	bic r1, r1, #0xF0
 	orr r1, r1, r0, lsl#4
 	strb_ r1, irq_latch
-	mov pc, lr
+	bx lr
 w2:
 	and r0, r0, #3
 	strb_ r0, irq_enable
 	tst r0, #2
-	moveq pc, lr
+	bxeq lr
 	ldrb_ r1, irq_latch
 	strb_ r1, irq_counter
-	mov pc, lr
+	bx lr
 w3:
 	ldrb_ r0, irq_enable
 	ands r0, r0, #1
 	movne r0, #3
 	strb_ r0, irq_enable
-	mov pc, lr
+	bx lr
 
 @---------------------------------------------------------------------------------
 hook:
-	ldrb_ r0,ppuctrl1
+	ldrb_ r0,ppuCtrl1
 	orr r0, r0, #0x18
-	strb_ r0,ppuctrl1		@NOT let bg or sp to hide...
+	strb_ r0,ppuCtrl1		@NOT let bg or sp to hide...
 
 	ldrb_ r0, irq_enable
 	tst r0, #2
@@ -194,7 +194,7 @@ hk0:
 	fetch 0
 
 @------------------------
-framehook:
+frameHook:
 	mov r0,#-1
 	ldr r1,=agb_obj_map
 	str r0,[r1],#4

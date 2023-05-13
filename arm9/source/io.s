@@ -1,5 +1,6 @@
 @---------------------------------------------------------------------------------
 	#include "equates.h"
+	#include "M6502.i"
 @---------------------------------------------------------------------------------
 	.global IO_reset
 	.global IO_R
@@ -13,12 +14,17 @@
 	.global joystate
 	.global nifi_keys
 	.global ad_scale
+	.global __af_state
+	.global __af_start
 @---------------------------------------------------------------------------------
 .section .text,"ax"
 @---------------------------------------------------------------------------------
 IO_reset:
 @---------------------------------------------------------------------------------
-	mov pc,lr
+	mov r0, #0
+	str r0, af_state			@clear autofire state
+
+	bx lr
 @---------------------------------------------------------------------------------
 IO_R:		@I/O read
 @read a IO register for NES
@@ -28,7 +34,7 @@ IO_R:		@I/O read
 	bmi empty_R		@no readable io register lower than 0x4015
 	cmp r2,#3
 	ldrmi pc,[pc,r2,lsl#2]	@go (0x4000 + (r2 - 15) * 4)
-	mov pc, lr
+	bx lr
 	@b FDS_R
 io_read_tbl:
 	.word _4015r	@4015 (sound)
@@ -36,7 +42,7 @@ io_read_tbl:
 	.word joy1_R	@4017: controller 2
 FDS_R:
 	mov r0, #0
-	mov pc, lr
+	bx lr
 @---------------------------------------------------------------------------------
 IO_W:		@I/O write
 @write a IO register for NES
@@ -89,7 +95,7 @@ PRIORITY = 0x000	@0x800=AGB OBJ priority 2/3
 	stmfd sp!,{r3-r8,lr}
 
 	and r1,r0,#0xe0
-	adr_ addy,memmap_tbl
+	adr_ addy,m6502MemTbl
 	ldr addy,[addy,r1,lsr#3]
 	and r0,r0,#0xff
 	add addy,addy,r0,lsl#8	@addy=DMA source
@@ -105,12 +111,12 @@ cpsp:
 	ldmia r0!, {r2-r5}
 	stmia r1!, {r2-r5}
 
-	ldr_ r0, emuflags
+	ldr_ r0, emuFlags
 	tst r0, #0x40 + SOFTRENDER		@sprite render type or pure software
 	beq 0f
 	ldmfd sp!,{r3-r8,pc}
 0:
-	ldr_ r0,emuflags  		@r7,8=priority flags for scaling type
+	ldr_ r0,emuFlags  		@r7,8=priority flags for scaling type
 	tst r0,#ALPHALERP
 	moveq r7,#0x00200000
 	movne r7,#0
@@ -127,7 +133,7 @@ dm0:
 	addcc r5, r5, #1
 	add r5, r5, #1
 
-	ldrb_ r0,ppuctrl0frame	@8x16?
+	ldrb_ r0,ppuCtrl0Frame	@8x16?
 	tst r0,#0x20
 	bne dm4
 @- - - - - - - - - - - - - 8x8 size
@@ -162,9 +168,9 @@ dm0:
 @	moveq r1,#512			@blank tile=no hit
 	cmp r1,#239
 	movhi r1,#512			@no hit if Y>239
-	str_ r1,sprite0y
+	str_ r1,sprite0Y
 @	ldrb r1,[addy,#3]		@r1=sprite0 x
-@	strb r1,sprite0x
+@	strb r1,sprite0X
 
 dm11:
 	ldr r3,[addy],#4
@@ -250,9 +256,9 @@ dm4:	@- - - - - - - - - - - - - 8x16 size
 @	moveq r1,#512			@blank tile=no hit
 	cmp r1,#239
 	movhi r1,#512			@no hit if Y>239
-	str_ r1,sprite0y
+	str_ r1,sprite0Y
 @	ldrb r1,[addy,#3]		@r1=sprite0 x
-@	strb r1,sprite0x
+@	strb r1,sprite0X
 
 	mov r4,#PRIORITY
 dm12:
@@ -372,13 +378,21 @@ joy2state: .byte 0
 joy3state: .byte 0      
 joy0serial: .word 0
 joy1serial: .word 0
-@nrplayers DCD 0	@Number of players in multilink.
+@nrplayers .long 0	@Number of players in multilink.
+
+__af_state:
+af_state:		@auto fire state
+	.word 0		@af_state
+__af_start:
+af_start:		@auto fire start
+	.word 0x101	@af_start 30 fps
+
 @---------------------------------------------------------------------------------
 joy0_W:		@4016
 @writing operation to reset/clear joypad status.
 @---------------------------------------------------------------------------------
 	tst r0,#1		@0 for clear; 1 for reset
-	movne pc,lr
+	bxne lr
 	@ldr r2,nrplayers
 	@cmp r2,#3
 	mov r2,#-1
@@ -396,7 +410,7 @@ joy0_W:		@4016
 	orr r0,r0,r2,lsl#8	@for normal joypads.
 	@orrpl r0,r0,#0x00040000	@4player adapter
 	str r0,joy1serial
-	mov pc,lr
+	bx lr
 @---------------------------------------------------------------------------------
 joy0_R:		@4016
 @---------------------------------------------------------------------------------
@@ -405,22 +419,22 @@ joy0_R:		@4016
 	and r0,r0,#1
 	str r1,joy0serial
 
-	ldrb_ r1,cartflags
+	ldrb_ r1,cartFlags
 	tst r1,#VS
 	orreq r0,r0,#0x40
-	moveq pc,lr
+	bxeq lr
 
 	ldrb r1,joy0state
 	tst r1,#8		@start=coin (VS)
 	orrne r0,r0,#0x40
 
-	ldr_ r1, emuflags
+	ldr_ r1, emuFlags
 	tst r1, #MICBIT
 	bic r1, #MICBIT
-	str_ r1, emuflags
+	str_ r1, emuFlags
 	orrne r0, r0, #0x4
 
-	mov pc,lr
+	bx lr
 @---------------------------------------------------------------------------------
 joy1_R:		@4017
 @---------------------------------------------------------------------------------
@@ -429,7 +443,7 @@ joy1_R:		@4017
 	and r0,r0,#1
 	str r1,joy1serial
 
-	ldr_ r1, emuflags
+	ldr_ r1, emuFlags
 	tst r1, #LIGHTGUN
 	beq 0f
 
@@ -438,16 +452,16 @@ joy1_R:		@4017
 	ands r2, r2, #KEY_TOUCH
 	orrne r0, r0, #0x10
 
-	ldr r2, =renderdata
+	ldr r2, =renderData
 
 	ldr r1, =IPC_TOUCH_X
 	ldrh r1, [r1]
 
 	add r2, r2, r1
 
-	ldr_ r1, lighty
+	ldr_ r1, lightY
 
-	add r2, r2, r1, lsl#8		@r1 = renderdata
+	add r2, r2, r1, lsl#8		@r1 = renderData
 	ldrb r2, [r2]
 
 	adr r1, bright
@@ -457,11 +471,11 @@ joy1_R:		@4017
 	orreq r0, r0, #8
 
 0:
-	ldrb_ r1,cartflags 
+	ldrb_ r1,cartFlags 
 	tst r1,#VS
 	orrne r0,r0,#0xf8	@VS dip switches
 
-	mov pc,lr
+	bx lr
 @------
 bright:
 	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 
@@ -569,27 +583,27 @@ rj5:
 @---------------------------------
 af_fresh:		@adjust the frequency of the auto-fire
 	ldr r2,joyflags
-	ldr_ r1, af_st
+	ldr r1, af_state
 	tst r1, #0xff00
-	beq aup
+	beq aUp
 	sub r1, #0x100
-	str_ r1, af_st
+	str r1, af_state
 	orr r2, r2, #AUTOFIRE
-	b aend
-aup:
+	b aEnd
+aUp:
 	tst r1, #0xff
-	beq afresh
+	beq aFresh
 	sub r1, r1, #0x1
-	str_ r1, af_st
+	str r1, af_state
 	bic r2, r2, #AUTOFIRE
-	b aend
-afresh:
-	ldr_ r1, af_start
+	b aEnd
+aFresh:
+	ldr r1, af_start
 	sub r1, #0x100
-	str_ r1, af_st
+	str r1, af_state
 	orr r2, r2, #AUTOFIRE
-aend:
+aEnd:
 	@eor r2,r2,#AUTOFIRE	@toggle autofire state
 	str r2,joyflags
 	
-	mov pc, lr
+	bx lr

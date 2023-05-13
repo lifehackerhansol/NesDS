@@ -1,17 +1,15 @@
 @---------------------------------------------------------------------------------
-.section .text,"ax"
-@---------------------------------------------------------------------------------
 	#include "equates.h"
 	#include "M6502mac.h"
 @---------------------------------------------------------------------------------
 	.global mapper105init
-	counter = mapperdata+0
-	reg0 = mapperdata+4
-	reg1 = mapperdata+5
-	reg2 = mapperdata+6
-	reg3 = mapperdata+7
-	latch = mapperdata+8
-	latchbit = mapperdata+9
+	counter = mapperData+0
+	reg0 = mapperData+4
+	reg1 = mapperData+5
+	reg2 = mapperData+6
+	reg3 = mapperData+7
+	latch = mapperData+8
+	latchbit = mapperData+9
 
 	dip = 0xb		@ DIPswitch, for playtime. 6min default.
 					@ 0x0 - 9.695
@@ -31,12 +29,14 @@
 					@ 0xe - 5.316
 					@ 0xf - 5.001
 @---------------------------------------------------------------------------------
+.section .text,"ax"
+@---------------------------------------------------------------------------------
 mapper105init:
 @---------------------------------------------------------------------------------
 	.word write0,write1,void,write3
 
 	adr r0,hook
-	str_ r0,scanlinehook
+	str_ r0,scanlineHook
 
 	mov r0,#0x0c	@init MMC1 regs
 	strb_ r0,reg0
@@ -59,7 +59,7 @@ reset:
 	mov r0,#0
 	strb_ r0,latch
 	strb_ r0,latchbit
-	mov pc,lr
+	bx lr
 @---------------------------------------------------------------------------------
 write0:		@($8000-$9FFF)
 @---------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ writelatch: @-----
 	add r2,r2,#1
 	strb_ r2,latchbit
 	strb_ r0,latch
-	mov pc,lr
+	bx lr
 w0:@----
 	strb_ r1,latch
 	strb_ r1,latchbit

@@ -1,20 +1,20 @@
 @---------------------------------------------------------------------------------
-.section .text,"ax"
-@---------------------------------------------------------------------------------
 	#include "equates.h"
 @---------------------------------------------------------------------------------
 	.global mapper1init
-	reg0 = mapperdata+0
-	reg1 = mapperdata+1
-	reg2 = mapperdata+2
-	reg3 = mapperdata+3
-	last_addr = mapperdata+4
-	patch = mapperdata+12
-	shift = mapperdata+13
-	regbuf = mapperdata + 8
-	wram_patch = mapperdata + 9
-	wram_bank = mapperdata + 10
-	wram_count = mapperdata + 11
+	reg0 = mapperData+0
+	reg1 = mapperData+1
+	reg2 = mapperData+2
+	reg3 = mapperData+3
+	last_addr = mapperData+4
+	patch = mapperData+12
+	shift = mapperData+13
+	regbuf = mapperData + 8
+	wram_patch = mapperData + 9
+	wram_bank = mapperData + 10
+	wram_count = mapperData + 11
+@---------------------------------------------------------------------------------
+.section .text,"ax"
 @---------------------------------------------------------------------------------
 mapper1init:
 @---------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ mapper1init:
 	mov r0, #0
 	bl map89AB_
 	
-	ldr_ r0, prgsize16k
+	ldr_ r0, prgSize16k
 	cmp r0, #32
 	movcc r0, #-1
 	movcs r0, #15
@@ -45,8 +45,8 @@ mapper1init:
 /*
 @patch for games...
 	stmfd sp!, {lr}
-	ldr_ r1, rombase	@src
-	ldr_ r2, romsize8k	@size
+	ldr_ r1, romBase	@src
+	ldr_ r2, romSize8k	@size
 	mov r2, r2, lsl#13
 	bl crc
 
@@ -115,7 +115,7 @@ write:		@($8000-$9FFF)
 	cmp r2, #0
 	ldreq r0, =NES_SRAM - 0x6000
 	ldrne r0, =NES_SRAM + 0x2000 - 0x6000	@too big.... in vnes, wram is 128k
-	str_ r0,memmap_tbl+12
+	str_ r0,m6502MemTbl+12
 	mov r0, #0
 	strb_ r2, wram_bank
 	strb_ r1, wram_count
@@ -203,7 +203,7 @@ mirr4:
 	
 @-------------------------------------
 gol1:
-	ldr_ r0, vrommask
+	ldr_ r0, vromMask
 	tst r0, #0x80000000			@means that there is no vrom
 	bne vrom0
 
@@ -233,7 +233,7 @@ vrom0:
 
 @-------------------------------------
 gol2:
-	ldr_ r0, vrommask
+	ldr_ r0, vromMask
 	tst r0, #0x80000000			@means that there is no vrom
 	bne vrom02
 
@@ -302,7 +302,7 @@ bigprom:
 	tst r0, #0x18
 	ldreq r0, =NES_SRAM - 0x6000
 	ldrne r0, =NES_SRAM + 0x2000 - 0x6000
-	str_ r0,memmap_tbl+12
+	str_ r0,m6502MemTbl+12
 
 b1:
 	cmp r2, #0
@@ -321,7 +321,7 @@ b1:
 	bl mirror2V_
 
 b2:
-	ldr_ r0, vrommask
+	ldr_ r0, vromMask
 	tst r0, #0x80000000
 	bne b21
 
@@ -350,12 +350,12 @@ b21:
 	ldrb_ r0, reg2
 	bl chr4567_
 b3:
-	ldr_ r2, prgsize16k
+	ldr_ r2, prgSize16k
 	cmp r2, #32
 	ldrcsb_ r1, reg1
 	andcs r1, r1, #0x10
 	movcc r1, #0
-	str r1, prombase
+	str r1, promBase
 
 	ldrb_ r0, reg0
 	tst r0, #0x8
@@ -369,8 +369,8 @@ b3:
 	add r0, r1, r2
 	bl map89AB_
 
-	ldr r1, prombase
-	ldr_ r2, prgsize16k
+	ldr r1, promBase
+	ldr_ r2, prgSize16k
 	cmp r2, #32
 	addcs r0, r1, #15
 	blcs mapCDEF_
@@ -382,8 +382,8 @@ b4:
 	add r0, r1, r2
 	bl mapCDEF_
 
-	ldr r1, prombase
-	ldr_ r2, prgsize16k
+	ldr r1, promBase
+	ldr_ r2, prgSize16k
 	cmp r2, #32
 	movcs r0, r1
 	blcs map89AB_
@@ -398,5 +398,5 @@ b5:
 	ldmfd sp!, {pc}
 
 @-----------------
-prombase:
+promBase:
 	.word 0

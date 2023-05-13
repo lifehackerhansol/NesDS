@@ -1,78 +1,31 @@
 @---------------------------------------------------------------------------------
-	#include "equates.h"
 	#include "M6502mac.h"
 	#include "macro.h"
 @---------------------------------------------------------------------------------	
-	.global NSF_Run
-	.global CPU_reset
-	.global EMU_Run
-	.global op_table
-	.global default_scanlinehook
-	.global pcm_scanlinehook
+	.global m6502Reset
+	.global defaultScanlineHook
+	.global Vec6502
+	.global m6502NMI
 	.global CheckI
-	.global PAL60
-	.global cpustate
-	.global ppustate
-	.global rommap
-	.global frametotal
-	.global sleeptime
-	.global mapperstate
-	.global globals
-	.global romstart
-	.global __nes_chr_map
-	.global __cartflags	
-	.global __emuflags
-	.global __hblankhook
-	.global stepdebug
-	.global __nz
-	.global __a
-	.global __x
-	.global __y
-	.global __p
-	.global __pc
-	.global __lastbank
-	.global __sp
-	.global __scanline
-	.global __nes_chr_map
-	.global __memmap_tbl
-	.global __rombase
-	.global debugstep
-	.global __rendercount
-	.global __barcode
-	.global __barcode_out
-	.global __af_st
-	.global __af_start
-	.global __prgsize16k
-	.global all_pix_start
-	.global all_pix_end
-	.global ntsc_pal_reset
-	.global debugwrite
-	.global debugwrite_c
-	.global nsfheader
 
-	.global __nsfplay
-	.global __nsfinit
-	.global __nsfsongno
-	.global __nsfsongmode
-		
-pcmirqbakup = mapperdata+24
-pcmirqcount = mapperdata+28
+	.global m6502OpTable
+
 @---------------------------------------------------------------------------------
 .section .itcm, "ax"
 @---------------------------------------------------------------------------------
 _xx:@	???					@invalid opcode
 @---------------------------------------------------------------------------------
-	DEBUGCOUNT BADOP
-	bl debugstep
+//	DEBUGCOUNT BADOP
+	bl debugStep
 	fetch 2
 @---------------------------------------------------------------------------------
 _00:@   BRK
 @---------------------------------------------------------------------------------
-	DEBUGCOUNT BRK
-	bl debugstep
+//	DEBUGCOUNT BRK
+	bl debugStep
 
-	ldr_ r0,lastbank
-	sub r1,m6502_pc,r0
+	ldr_ r0,m6502LastBank
+	sub r1,m6502pc,r0
 	add r0,r1,#1
 	push16			@save PC
 
@@ -117,8 +70,8 @@ _09:@   ORA #$nn
 @---------------------------------------------------------------------------------
 _0A:@   ASL
 @---------------------------------------------------------------------------------
-	adds m6502_a,m6502_a,m6502_a
-	mov m6502_nz,m6502_a,asr#24		@NZ
+	adds m6502a,m6502a,m6502a
+	mov m6502nz,m6502a,asr#24		@NZ
 	orr cycles,cycles,#CYC_C		@Prepare C
 	fetch_c 2						@also subs carry
 @---------------------------------------------------------------------------------
@@ -137,9 +90,9 @@ _0E:@   ASL $nnnn
 @---------------------------------------------------------------------------------
 _10:@   BPL *
 @---------------------------------------------------------------------------------
-	tst m6502_nz,#0x80000000
-	ldrsb r0,[m6502_pc],#1
-	addeq m6502_pc,m6502_pc,r0
+	tst m6502nz,#0x80000000
+	ldrsb r0,[m6502pc],#1
+	addeq m6502pc,m6502pc,r0
 	subeq cycles,cycles,#3*CYCLE
 	fetch 2
 @---------------------------------------------------------------------------------
@@ -188,11 +141,11 @@ _1E:@   ASL $nnnn,X
 @---------------------------------------------------------------------------------
 _20:@   JSR $nnnn
 @---------------------------------------------------------------------------------
-	ldrb r2,[m6502_pc],#1
-	ldr_ r1,lastbank
-	sub r0,m6502_pc,r1
-	ldrb r1,[m6502_pc]
-	orr m6502_pc,r2,r1,lsl#8
+	ldrb r2,[m6502pc],#1
+	ldr_ r1,m6502LastBank
+	sub r0,m6502pc,r1
+	ldrb r1,[m6502pc]
+	orr m6502pc,r2,r1,lsl#8
 	push16
 	encodePC
 	fetch 6
@@ -236,9 +189,9 @@ _29:@   AND #$nn
 _2A:@   ROL
 @---------------------------------------------------------------------------------
 	movs cycles,cycles,lsr#1		@get C
-	orrcs m6502_a,m6502_a,#0x00800000
-	adds m6502_a,m6502_a,m6502_a
-	mov m6502_nz,m6502_a,asr#24		@NZ
+	orrcs m6502a,m6502a,#0x00800000
+	adds m6502a,m6502a,m6502a
+	mov m6502nz,m6502a,asr#24		@NZ
 	adc cycles,cycles,cycles		@Set C
 	fetch 2
 @---------------------------------------------------------------------------------
@@ -262,9 +215,9 @@ _2E:@   ROL $nnnn
 @---------------------------------------------------------------------------------
 _30:@   BMI *
 @---------------------------------------------------------------------------------
-	tst m6502_nz,#0x80000000
-	ldrsb r0,[m6502_pc],#1
-	addne m6502_pc,m6502_pc,r0
+	tst m6502nz,#0x80000000
+	ldrsb r0,[m6502pc],#1
+	addne m6502pc,m6502pc,r0
 	subne cycles,cycles,#3*CYCLE
 	fetch 2
 @---------------------------------------------------------------------------------
@@ -339,7 +292,7 @@ _46:@   LSR $nn
 @---------------------------------------------------------------------------------
 _48:@   PHA
 @---------------------------------------------------------------------------------
-	mov r0,m6502_a,lsr#24
+	mov r0,m6502a,lsr#24
 	push8 r0
 	fetch 3
 @---------------------------------------------------------------------------------
@@ -351,16 +304,16 @@ _49:@   EOR #$nn
 @---------------------------------------------------------------------------------
 _4A:@   LSR
 @---------------------------------------------------------------------------------
-	movs m6502_nz,m6502_a,lsr#25	@Z, N=0
-	mov m6502_a,m6502_nz,lsl#24		@result without garbage
+	movs m6502nz,m6502a,lsr#25	@Z, N=0
+	mov m6502a,m6502nz,lsl#24		@result without garbage
 	orr cycles,cycles,#CYC_C		@Prepare C
 	fetch_c 2
 @---------------------------------------------------------------------------------
 _4C:@   JMP $nnnn
 @---------------------------------------------------------------------------------
-	ldrb r0,[m6502_pc],#1
-	ldrb r1,[m6502_pc]
-	orr m6502_pc,r0,r1,lsl#8
+	ldrb r0,[m6502pc],#1
+	ldrb r1,[m6502pc]
+	orr m6502pc,r0,r1,lsl#8
 	encodePC
 	fetch 3
 @---------------------------------------------------------------------------------
@@ -379,8 +332,8 @@ _4E:@   LSR $nnnn
 _50:@   BVC *
 @---------------------------------------------------------------------------------
 	tst cycles,#CYC_V
-	ldrsb r0,[m6502_pc],#1
-	addeq m6502_pc,m6502_pc,r0
+	ldrsb r0,[m6502pc],#1
+	addeq m6502pc,m6502pc,r0
 	subeq cycles,cycles,#3*CYCLE
 	fetch 2
 @---------------------------------------------------------------------------------
@@ -430,7 +383,7 @@ _5E:@   LSR $nnnn,X
 _60:@   RTS
 @---------------------------------------------------------------------------------
 	pop16
-	add m6502_pc,m6502_pc,#1
+	add m6502pc,m6502pc,#1
 	encodePC
 	fetch 6
 @---------------------------------------------------------------------------------
@@ -454,8 +407,8 @@ _66:@   ROR $nn
 @---------------------------------------------------------------------------------
 _68:@   PLA
 @---------------------------------------------------------------------------------
-	pop8 m6502_nz
-	mov m6502_a,m6502_nz,lsl#24
+	pop8 m6502nz
+	mov m6502a,m6502nz,lsl#24
 	fetch 4
 @---------------------------------------------------------------------------------
 _69:@   ADC #$nn
@@ -467,21 +420,21 @@ _69:@   ADC #$nn
 _6A:@   ROR
 @---------------------------------------------------------------------------------
 	movs cycles,cycles,lsr#1		@get C
-	mov m6502_a,m6502_a,rrx
-	movs m6502_nz,m6502_a,asr#24	@NZ
-	and m6502_a,m6502_a,#0xff000000
+	mov m6502a,m6502a,rrx
+	movs m6502nz,m6502a,asr#24	@NZ
+	and m6502a,m6502a,#0xff000000
 	adc cycles,cycles,cycles		@Set C
 	fetch 2
 @---------------------------------------------------------------------------------
 _6C:@   JMP ($nnnn)
 @---------------------------------------------------------------------------------
 	doABS
-	adr_ r1,memmap_tbl
+	adr_ r1,m6502MemTbl
 	and r2,addy,#0xE000
 	ldr r1,[r1,r2,lsr#11]
-	ldrb m6502_pc,[r1,addy]!
+	ldrb m6502pc,[r1,addy]!
 	ldrb r0,[r1,#1]
-	orr m6502_pc,m6502_pc,r0,lsl#8
+	orr m6502pc,m6502pc,r0,lsl#8
 	encodePC
 	fetch 5
 @---------------------------------------------------------------------------------
@@ -500,8 +453,8 @@ _6E:@   ROR $nnnn
 _70:@   BVS *
 @---------------------------------------------------------------------------------
 	tst cycles,#CYC_V
-	ldrsb r0,[m6502_pc],#1
-	addne m6502_pc,m6502_pc,r0
+	ldrsb r0,[m6502pc],#1
+	addne m6502pc,m6502pc,r0
 	subne cycles,cycles,#3*CYCLE
 	fetch 2
 @---------------------------------------------------------------------------------
@@ -550,215 +503,215 @@ _7E:@   ROR $nnnn,X
 _81:@   STA ($nn,X)
 @---------------------------------------------------------------------------------
 	doIIX
-	opSTORE m6502_a
+	opSTORE m6502a
 	fetch 6
 @---------------------------------------------------------------------------------
 _84:@   STY $nn
 @---------------------------------------------------------------------------------
 	doZ
-	opSTORE m6502_y
+	opSTORE m6502y
 	fetch 3
 @---------------------------------------------------------------------------------
 _85:@   STA $nn
 @---------------------------------------------------------------------------------
 	doZ
-	opSTORE m6502_a
+	opSTORE m6502a
 	fetch 3
 @---------------------------------------------------------------------------------
 _86:@   STX $nn
 @---------------------------------------------------------------------------------
 	doZ
-	opSTORE m6502_x
+	opSTORE m6502x
 	fetch 3
 @---------------------------------------------------------------------------------
 _88:@   DEY
 @---------------------------------------------------------------------------------
-	sub m6502_y,m6502_y,#0x01000000
-	mov m6502_nz,m6502_y,asr#24
+	sub m6502y,m6502y,#0x01000000
+	mov m6502nz,m6502y,asr#24
 	fetch 2
 @---------------------------------------------------------------------------------
 _8A:@   TXA
 @---------------------------------------------------------------------------------
-	mov m6502_a,m6502_x
-	mov m6502_nz,m6502_x,asr#24
+	mov m6502a,m6502x
+	mov m6502nz,m6502x,asr#24
 	fetch 2
 @---------------------------------------------------------------------------------
 _8C:@   STY $nnnn
 @---------------------------------------------------------------------------------
 	doABS
-	opSTORE m6502_y
+	opSTORE m6502y
 	fetch 4
 @---------------------------------------------------------------------------------
 _8D:@   STA $nnnn
 @---------------------------------------------------------------------------------
 	doABS
-	opSTORE m6502_a
+	opSTORE m6502a
 	fetch 4
 @---------------------------------------------------------------------------------
 _8E:@   STX $nnnn
 @---------------------------------------------------------------------------------
 	doABS
-	opSTORE m6502_x
+	opSTORE m6502x
 	fetch 4
 @---------------------------------------------------------------------------------
 _90:@   BCC *
 @---------------------------------------------------------------------------------
 	tst cycles,#CYC_C			@Test Carry
-	ldrsb r0,[m6502_pc],#1
-	addeq m6502_pc,m6502_pc,r0
+	ldrsb r0,[m6502pc],#1
+	addeq m6502pc,m6502pc,r0
 	subeq cycles,cycles,#3*CYCLE
 	fetch 2
 @---------------------------------------------------------------------------------
 _91:@   STA ($nn),Y
 @---------------------------------------------------------------------------------
 	doIIY
-	opSTORE m6502_a
+	opSTORE m6502a
 	fetch 6
 @---------------------------------------------------------------------------------
 _94:@   STY $nn,X
 @---------------------------------------------------------------------------------
 	doZIXf
-	opSTORE m6502_y
+	opSTORE m6502y
 	fetch 4
 @---------------------------------------------------------------------------------
 _95:@   STA $nn,X
 @---------------------------------------------------------------------------------
 	doZIXf
-	opSTORE m6502_a
+	opSTORE m6502a
 	fetch 4
 @---------------------------------------------------------------------------------
 _96:@   STX $nn,Y
 @---------------------------------------------------------------------------------
 	doZIYf
-	opSTORE m6502_x
+	opSTORE m6502x
 	fetch 4
 @---------------------------------------------------------------------------------
 _98:@   TYA
 @---------------------------------------------------------------------------------
-	mov m6502_a,m6502_y
-	mov m6502_nz,m6502_y,asr#24
+	mov m6502a,m6502y
+	mov m6502nz,m6502y,asr#24
 	fetch 2
 @---------------------------------------------------------------------------------
 _99:@   STA $nnnn,Y
 @---------------------------------------------------------------------------------
 	doAIY
-	opSTORE m6502_a
+	opSTORE m6502a
 	fetch 5
 @---------------------------------------------------------------------------------
 _9A:@   TXS
 @---------------------------------------------------------------------------------
-	mov r0,m6502_x,lsr#24
-	strb_ r0,m6502_s
+	mov r0,m6502x,lsr#24
+	strb_ r0,m6502RegSP
 	fetch 2
 @---------------------------------------------------------------------------------
 _9D:@   STA $nnnn,X
 @---------------------------------------------------------------------------------
 	doAIX
-	opSTORE m6502_a
+	opSTORE m6502a
 	fetch 5
 @---------------------------------------------------------------------------------
 _A0:@   LDY #$nn
 @---------------------------------------------------------------------------------
 	doIMM
-	opLOAD m6502_y
+	opLOAD m6502y
 	fetch 2
 @---------------------------------------------------------------------------------
 _A1:@   LDA ($nn,X)
 @---------------------------------------------------------------------------------
 	doIIX
-	opLOAD m6502_a
+	opLOAD m6502a
 	fetch 6
 @---------------------------------------------------------------------------------
 _A2:@   LDX #$nn
 @---------------------------------------------------------------------------------
 	doIMM
-	opLOAD m6502_x
+	opLOAD m6502x
 	fetch 2
 @---------------------------------------------------------------------------------
 _A4:@   LDY $nn
 @---------------------------------------------------------------------------------
 	doZ
-	opLOAD m6502_y
+	opLOAD m6502y
 	fetch 3
 @---------------------------------------------------------------------------------
 _A5:@   LDA $nn
 @---------------------------------------------------------------------------------
 	doZ
-	opLOAD m6502_a
+	opLOAD m6502a
 	fetch 3
 @---------------------------------------------------------------------------------
 _A6:@   LDX $nn
 @---------------------------------------------------------------------------------
 	doZ
-	opLOAD m6502_x
+	opLOAD m6502x
 	fetch 3
 @---------------------------------------------------------------------------------
 _A8:@   TAY
 @---------------------------------------------------------------------------------
-	mov m6502_y,m6502_a
-	mov m6502_nz,m6502_y,asr#24
+	mov m6502y,m6502a
+	mov m6502nz,m6502y,asr#24
 	fetch 2
 @---------------------------------------------------------------------------------
 _A9:@   LDA #$nn
 @---------------------------------------------------------------------------------
 	doIMM
-	opLOAD m6502_a
+	opLOAD m6502a
 	fetch 2
 @---------------------------------------------------------------------------------
 _AA:@   TAX
 @---------------------------------------------------------------------------------
-	mov m6502_x,m6502_a
-	mov m6502_nz,m6502_x,asr#24
+	mov m6502x,m6502a
+	mov m6502nz,m6502x,asr#24
 	fetch 2
 @---------------------------------------------------------------------------------
 _AC:@   LDY $nnnn
 @---------------------------------------------------------------------------------
 	doABS
-	opLOAD m6502_y
+	opLOAD m6502y
 	fetch 4
 @---------------------------------------------------------------------------------
 _AD:@   LDA $nnnn
 @---------------------------------------------------------------------------------
 	doABS
-	opLOAD m6502_a
+	opLOAD m6502a
 	fetch 4
 @---------------------------------------------------------------------------------
 _AE:@   LDX $nnnn
 @---------------------------------------------------------------------------------
 	doABS
-	opLOAD m6502_x
+	opLOAD m6502x
 	fetch 4
 @---------------------------------------------------------------------------------
 _B0:@   BCS *
 @---------------------------------------------------------------------------------
 	tst cycles,#CYC_C			@Test Carry
-	ldrsb r0,[m6502_pc],#1
-	addne m6502_pc,m6502_pc,r0
+	ldrsb r0,[m6502pc],#1
+	addne m6502pc,m6502pc,r0
 	subne cycles,cycles,#3*CYCLE
 	fetch 2
 @---------------------------------------------------------------------------------
 _B1:@   LDA ($nn),Y
 @---------------------------------------------------------------------------------
 	doIIY
-	opLOAD m6502_a
+	opLOAD m6502a
 	fetch 5
 @---------------------------------------------------------------------------------
 _B4:@   LDY $nn,X
 @---------------------------------------------------------------------------------
 	doZIX
-	opLOAD m6502_y
+	opLOAD m6502y
 	fetch 4
 @---------------------------------------------------------------------------------
 _B5:@   LDA $nn,X
 @---------------------------------------------------------------------------------
 	doZIX
-	opLOAD m6502_a
+	opLOAD m6502a
 	fetch 4
 @---------------------------------------------------------------------------------
 _B6:@   LDX $nn,Y
 @---------------------------------------------------------------------------------
 	doZIY
-	opLOAD m6502_x
+	opLOAD m6502x
 	fetch 4
 @---------------------------------------------------------------------------------
 _B8:@   CLV
@@ -769,56 +722,56 @@ _B8:@   CLV
 _B9:@   LDA $nnnn,Y
 @---------------------------------------------------------------------------------
 	doAIY
-	opLOAD m6502_a
+	opLOAD m6502a
 	fetch 4
 @---------------------------------------------------------------------------------
 _BA:@   TSX
 @---------------------------------------------------------------------------------
-	ldrb_ m6502_x,m6502_s
-	mov m6502_x,m6502_x,lsl#24
-	mov m6502_nz,m6502_x,asr#24
+	ldrb_ m6502x,m6502RegSP
+	mov m6502x,m6502x,lsl#24
+	mov m6502nz,m6502x,asr#24
 	fetch 2
 @---------------------------------------------------------------------------------
 _BC:@   LDY $nnnn,X
 @---------------------------------------------------------------------------------
 	doAIX
-	opLOAD m6502_y
+	opLOAD m6502y
 	fetch 4
 @---------------------------------------------------------------------------------
 _BD:@   LDA $nnnn,X
 @---------------------------------------------------------------------------------
 	doAIX
-	opLOAD m6502_a
+	opLOAD m6502a
 	fetch 4
 @---------------------------------------------------------------------------------
 _BE:@   LDX $nnnn,Y
 @---------------------------------------------------------------------------------
 	doAIY
-	opLOAD m6502_x
+	opLOAD m6502x
 	fetch 4
 @---------------------------------------------------------------------------------
 _C0:@   CPY #$nn
 @---------------------------------------------------------------------------------
 	doIMM
-	opCOMP m6502_y
+	opCOMP m6502y
 	fetch_c 2
 @---------------------------------------------------------------------------------
 _C1:@   CMP ($nn,X)
 @---------------------------------------------------------------------------------
 	doIIX
-	opCOMP m6502_a
+	opCOMP m6502a
 	fetch_c 6
 @---------------------------------------------------------------------------------
 _C4:@   CPY $nn
 @---------------------------------------------------------------------------------
 	doZ
-	opCOMP m6502_y
+	opCOMP m6502y
 	fetch_c 3
 @---------------------------------------------------------------------------------
 _C5:@   CMP $nn
 @---------------------------------------------------------------------------------
 	doZ
-	opCOMP m6502_a
+	opCOMP m6502a
 	fetch_c 3
 @---------------------------------------------------------------------------------
 _C6:@   DEC $nn
@@ -829,32 +782,32 @@ _C6:@   DEC $nn
 @---------------------------------------------------------------------------------
 _C8:@   INY
 @---------------------------------------------------------------------------------
-	add m6502_y,m6502_y,#0x01000000
-	mov m6502_nz,m6502_y,asr#24
+	add m6502y,m6502y,#0x01000000
+	mov m6502nz,m6502y,asr#24
 	fetch 2
 @---------------------------------------------------------------------------------
 _C9:@   CMP #$nn
 @---------------------------------------------------------------------------------
 	doIMM
-	opCOMP m6502_a
+	opCOMP m6502a
 	fetch_c 2
 @---------------------------------------------------------------------------------
 _CA:@   DEX
 @---------------------------------------------------------------------------------
-	sub m6502_x,m6502_x,#0x01000000
-	mov m6502_nz,m6502_x,asr#24
+	sub m6502x,m6502x,#0x01000000
+	mov m6502nz,m6502x,asr#24
 	fetch 2
 @---------------------------------------------------------------------------------
 _CC:@   CPY $nnnn
 @---------------------------------------------------------------------------------
 	doABS
-	opCOMP m6502_y
+	opCOMP m6502y
 	fetch_c 4
 @---------------------------------------------------------------------------------
 _CD:@   CMP $nnnn
 @---------------------------------------------------------------------------------
 	doABS
-	opCOMP m6502_a
+	opCOMP m6502a
 	fetch_c 4
 @---------------------------------------------------------------------------------
 _CE:@   DEC $nnnn
@@ -865,22 +818,22 @@ _CE:@   DEC $nnnn
 @---------------------------------------------------------------------------------
 _D0:@   BNE *
 @---------------------------------------------------------------------------------
-	tst m6502_nz,#0xff
-	ldrsb r0,[m6502_pc],#1
-	addne m6502_pc,m6502_pc,r0
+	tst m6502nz,#0xff
+	ldrsb r0,[m6502pc],#1
+	addne m6502pc,m6502pc,r0
 	subne cycles,cycles,#3*CYCLE
 	fetch 2
 @---------------------------------------------------------------------------------
 _D1:@   CMP ($nn),Y
 @---------------------------------------------------------------------------------
 	doIIY
-	opCOMP m6502_a
+	opCOMP m6502a
 	fetch_c 5
 @---------------------------------------------------------------------------------
 _D5:@   CMP $nn,X
 @---------------------------------------------------------------------------------
 	doZIXf
-	opCOMP m6502_a
+	opCOMP m6502a
 	fetch_c 4
 @---------------------------------------------------------------------------------
 _D6:@   DEC $nn,X
@@ -897,13 +850,13 @@ _D8:@   CLD
 _D9:@   CMP $nnnn,Y
 @---------------------------------------------------------------------------------
 	doAIY
-	opCOMP m6502_a
+	opCOMP m6502a
 	fetch_c 4
 @---------------------------------------------------------------------------------
 _DD:@   CMP $nnnn,X
 @---------------------------------------------------------------------------------
 	doAIX
-	opCOMP m6502_a
+	opCOMP m6502a
 	fetch_c 4
 @---------------------------------------------------------------------------------
 _DE:@   DEC $nnnn,X
@@ -915,7 +868,7 @@ _DE:@   DEC $nnnn,X
 _E0:@   CPX #$nn
 @---------------------------------------------------------------------------------
 	doIMM
-	opCOMP m6502_x
+	opCOMP m6502x
 	fetch_c 2
 @---------------------------------------------------------------------------------
 _E1:@   SBC ($nn,X)
@@ -927,7 +880,7 @@ _E1:@   SBC ($nn,X)
 _E4:@   CPX $nn
 @---------------------------------------------------------------------------------
 	doZ
-	opCOMP m6502_x
+	opCOMP m6502x
 	fetch_c 3
 @---------------------------------------------------------------------------------
 _E5:@   SBC $nn
@@ -944,8 +897,8 @@ _E6:@   INC $nn
 @---------------------------------------------------------------------------------
 _E8:@   INX
 @---------------------------------------------------------------------------------
-	add m6502_x,m6502_x,#0x01000000
-	mov m6502_nz,m6502_x,asr#24
+	add m6502x,m6502x,#0x01000000
+	mov m6502nz,m6502x,asr#24
 	fetch 2
 @---------------------------------------------------------------------------------
 _E9:@   SBC #$nn
@@ -961,7 +914,7 @@ _EA:@   NOP
 _EC:@   CPX $nnnn
 @---------------------------------------------------------------------------------
 	doABS
-	opCOMP m6502_x
+	opCOMP m6502x
 	fetch_c 4
 @---------------------------------------------------------------------------------
 _ED:@   SBC $nnnn
@@ -978,9 +931,9 @@ _EE:@   INC $nnnn
 @---------------------------------------------------------------------------------
 _F0:@   BEQ *
 @---------------------------------------------------------------------------------
-	tst m6502_nz,#0xff
-	ldrsb r0,[m6502_pc],#1
-	addeq m6502_pc,m6502_pc,r0
+	tst m6502nz,#0xff
+	ldrsb r0,[m6502pc],#1
+	addeq m6502pc,m6502pc,r0
 	subeq cycles,cycles,#3*CYCLE
 	fetch 2
 @---------------------------------------------------------------------------------
@@ -1027,272 +980,14 @@ _FE:@   INC $nnnn,X
 @---------------------------------------------------------------------------------
 .section .text, "ax"
 @---------------------------------------------------------------------------------
-@cycles ran out
-@---------------------------------------------------------------------------------
-line0:
-	mov r0,#0
-	strb_ r0,ppustat			@vbl clear, sprite0 clear
-	str_ r0,scanline			@reset scanline count
-
-	bl newframe					@display update
-	
-	mov r0,#0
-	bl ppusync
-
-	ldr_ r0,cyclesperscanline
-	ldr_ r1,frame
-	tst r1,#1
-	subeq r0,r0,#CYCLE			@Every other frame has 1/3 less CPU cycle.
-	add cycles,cycles,r0
-	adr r0,line1_to_119
-	str_ r0,nexttimeout
-	ldr_ pc,scanlinehook
-@---------------------------------------------------------------------------------
-line1_to_119:
-	ldr_ r0,cyclesperscanline
-	add cycles,cycles,r0
-
-	ldr_ r0,scanline
-	add r0,r0,#1
-	str_ r0,scanline
-	cmp r0,#119
-	beq line119
-	
-	bl ppusync
-	ldr_ pc,scanlinehook
-@---------------------------------------------------------------------------------
-line119:
-	bl ppusync
-	
-	ldrb_ r0,ppuctrl0
-	strb_ r0,ppuctrl0frame		@Contra likes this
-
-	adr addy,line120_to_240
-	str_ addy,nexttimeout
-	ldr_ pc,scanlinehook
-@---------------------------------------------------------------------------------
-line120_to_240:
-	ldr_ r0,cyclesperscanline
-	add cycles,cycles,r0
-
-	ldr_ r0,scanline
-	add r0,r0,#1
-	str_ r0,scanline
-
-	cmp r0,#240
-	adreq addy,line241
-	streq_ addy,nexttimeout
-	blne ppusync
-
-	ldr_ pc,scanlinehook
-@---------------------------------------------------------------------------------
-line241:
-NMIDELAY = CYCLE*21
-
-
-	add cycles,cycles,#NMIDELAY	@NMI is delayed a few cycles..
-
-@	ldrb r1,ppustat
-@	orr r1,r1,#0x90		@vbl & vram write
-	mov r1,#0x80		@vbl flag
-	strb_ r1,ppustat
-
-	adr addy,line241NMI
-	str_ addy,nexttimeout
-	b default_scanlinehook
-@---------------------------------------------------------------------------------
-line241NMI:
-	ldr_ r0,frame
-	add r0,r0,#1
-	str_ r0,frame
-
-	ldrb_ r0,ppuctrl0
-	tst r0,#0x80
-	beq 0f			@NMI?
-
-	ldr r12,=NMI_VECTOR
-	bl Vec6502
-	sub cycles,cycles,#3*7*CYCLE
-0:
-	sub cycles,cycles,#NMIDELAY
-
-	@--- end of EMU_Run
-	adr_ r2,cpuregs
-	stmia r2,{m6502_nz-m6502_pc}	@save 6502 state
-
-	bl refreshNESjoypads
-
-	bl updatesound
-
-	adr lr, 2f
-	ldr_ pc, endframehook
-2:
-	ldmfd sp!,{m6502_nz-m6502_pc,globalptr,cpu_zpage,pc}
-
-@---------------------------------------------------------------------------------
-NSF_Run:
-@---------------------------------------------------------------------------------
-	adr r1,nsf_out
-	str_ r1,nexttimeout
-
-	ldr_ r0, nsfplay
-	ands r0, r0, r0
-	beq noplay
-
-	ldr_ r0, nsfinit
-	ands r0, r0, r0
-	beq noinit
-
-	mov r0, #0
-	mov r1, cpu_zpage
-	ldr r2, =0x2000/4
-	bl filler
-
-	ldr_ r1, nsfextrachipselect
-	tst r1, #4
-	bne 0f
-
-	ldr r1, =wram
-	ldr r2, =0x2000/4
-	bl filler
-0:
-	ldr_ r0,cyclesperscanline
-	add cycles,cycles,r0, lsl#14
-
-	ldr addy, =0x4015
-	mov r0, #0xf
-	bl soundwrite
-		ldr addy, =0x4017
-		mov r0, #0xc0
-		bl soundwrite
-		ldr addy, =0x4080
-		mov r0, #0x80
-		bl soundwrite
-		ldr addy, =0x408a
-		mov r0, #0xe8
-		bl soundwrite
-
-	ldr m6502_pc, =0x4710
-	encodePC
-	ldr_ m6502_a, nsfsongno
-	orr m6502_a, m6502_a, m6502_a, lsl#24
-	ldr_ m6502_x, nsfsongmode
-	mov m6502_y, #0
-	ldr r0,=NES_RAM+0x100
-	str_ r0, m6502_s
-	orr cycles,#CYC_I
-	
-	mov r0, #0
-	str_ r0, nsfinit
-	ldr_ pc,scanlinehook
-
-noinit:
-	ldr_ r0,cyclesperscanline
-	add cycles,cycles,r0, lsl#8
-
-	ldr_ r1,lastbank
-	sub m6502_pc,m6502_pc,r1
-	cmp m6502_pc, #0x4700
-	ldrne_ pc,scanlinehook
-
-	ldr m6502_pc, =0x4720
-	encodePC
-	ldr r0,=NES_RAM+0x100
-	str_ r0, m6502_s
-	mov m6502_a, #0
-	ldr_ pc,scanlinehook
-
-noplay:
-	ldr_ r0,cyclesperscanline
-	add cycles,cycles,r0, lsl#8
-
-	ldr m6502_pc, =0x4700
-	encodePC
-	ldr r0,=NES_RAM+0x100
-	str_ r0, m6502_s
-	ldr_ pc,scanlinehook
-
-nsf_out:
-	adr_ r2,cpuregs
-	stmia r2,{m6502_nz-m6502_pc}	@save 6502 state
-	bl updatesound
-	ldmfd sp!,{m6502_nz-m6502_pc,globalptr,cpu_zpage,pc}
-@---------------------------------------------------------------------------------
-EMU_Run:
-@---------------------------------------------------------------------------------
-	stmfd sp!,{m6502_nz-m6502_pc,globalptr,cpu_zpage,lr}
-
-	ldr globalptr,=globals
-	ldr cpu_zpage,=NES_RAM
-
-	adr_ r0,cpuregs
-	ldmia r0,{m6502_nz-m6502_pc}	@restore 6502 state
-
-
-	ldr_ r0,cyclesperscanline
-	add cycles,cycles,r0
-	
-	mov r0,#241
-	str_ r0,scanline
-	
-	adr r1,line242_to_end
-	str_ r1,nexttimeout
-
-	ldr_ r1,emuflags
-	tst r1, #NSFFILE
-	bne NSF_Run
-
-	ldr_ pc,scanlinehook
-@---------------------------------------------------------------------------------
-line242_to_end:
-	ldr_ r0,cyclesperscanline
-	add cycles,cycles,r0
-
-	ldr_ r1,scanline
-	ldr_ r2,lastscanline
-	add r1,r1,#1
-	str_ r1,scanline
-	cmp r1,r2
-	ldrne_ pc,scanlinehook
-
-	adr addy,line0
-	str_ addy,nexttimeout
-	ldr_ pc,scanlinehook
-@---------------------------------------------------------------------------------
-pcm_scanlinehook:
-@---------------------------------------------------------------------------------
-	@ldr addy,=pcmctrl
-	@ldr r2,[addy]
-	@tst r2,#0x1000			@Is PCM on?
-	@beq hk0
-		b hk0
-
-	ldr_ r0,pcmirqcount
-@	ldr r1,cyclesperscanline
-@	subs r0,r0,r1,lsr#4
-	subs r0,r0,#121			@Fire Hawk=122
-	str_ r0,pcmirqcount
-	bpl hk0
-
-	tst r2,#0x40			@Is PCM loop on?
-	ldrne_ r0,pcmirqbakup
-	strne_ r0,pcmirqcount
-	bne hk0
-	tst r2,#0x80			@Is PCM IRQ on?
-	orrne r2,r2,#0x8000		@set pcm IRQ bit in R4015
-	bic r2,r2,#0x1000		@clear channel 5
-	str r2,[addy]
-	bne CheckI
-@---------------------------------------------------------------------------------
-hk0:
-default_scanlinehook:
+defaultScanlineHook:
 @---------------------------------------------------------------------------------
 	fetch 0
 @---------------------------------------------------------------------------------
-CheckI:								@Check Interrupt Disable
+CheckI:							@ Check Interrupt Disable
 @---------------------------------------------------------------------------------
 	tst cycles,#CYC_I
-	bne default_scanlinehook		@we dont want no stinkin irqs
+	bne defaultScanlineHook		@ We dont want no stinkin irqs
 @---------------------------------------------------------------------------------
 irq6502:
 @---------------------------------------------------------------------------------
@@ -1300,90 +995,69 @@ irq6502:
 	bl Vec6502
 	fetch 7
 @---------------------------------------------------------------------------------
+m6502NMI:
+@---------------------------------------------------------------------------------
+	ldr r12,=NMI_VECTOR
+@---------------------------------------------------------------------------------
 Vec6502:
 @---------------------------------------------------------------------------------
-	ldr_ r0,lastbank
-	sub r0,m6502_pc,r0
-	push16					@save PC
+	ldr_ r0,m6502LastBank
+	sub r0,m6502pc,r0
+	push16						@ Save PC
 
-	encodeP (R)				@save P
+	encodeP (R)					@ Save P
 VecCont:
 	push8 r0
 
-	orr cycles,cycles,#CYC_I	@disable IRQ
-@	bic cycles,cycles,#CYC_D	@and decimal mode
+	orr cycles,cycles,#CYC_I	@ Disable IRQ
+@	bic cycles,cycles,#CYC_D	@ and decimal mode
 
-	ldr_ r0,memmap_tbl+7*4
-	ldrb m6502_pc,[r0,r12]!
+	ldr_ r0,m6502MemTbl+7*4
+	ldrb m6502pc,[r0,r12]!
 	ldrb r2,[r0,#1]
-	orr m6502_pc,m6502_pc,r2,lsl#8
-	encodePC				@get IRQ vector
+	orr m6502pc,m6502pc,r2,lsl#8
+	encodePC					@ Get IRQ vector
 
 	bx lr
+@----------------------------------------------------------------------------
+IRQ_VECTOR		= 0xfffe @ IRQ/BRK interrupt vector address
+RES_VECTOR		= 0xfffc @ RESET interrupt vector address
+NMI_VECTOR		= 0xfffa @ NMI interrupt vector address
 @---------------------------------------------------------------------------------
-fiveminutes:	.word 5*60*60
-sleeptime: 		.word 5*60*60
-dontstop: 		.word 0
-PAL60: 			.byte 0
-				.align
+m6502Reset:	@ Called by CPU_Reset (r0-r9 are free to use)
 @---------------------------------------------------------------------------------
-ntsc_pal_reset:
-@---------------------------------------------------------------------------------
-@---NTSC/PAL
-	mov r2, globalptr
-	ldr globalptr,=globals
+	stmfd sp!, {lr}
 
-	ldr_ r0,emuflags
-	tst r0,#PALTIMING
-	
-	ldreq r1,=341*CYCLE		@NTSC		(113+2/3)*3
-	ldrne r1,=320*CYCLE		@PAL		(106+9/16)*3
-	str_ r1,cyclesperscanline
-	ldreq r1,=261			@NTSC
-	ldrne r1,=311			@PAL
-	str_ r1,lastscanline
-	mov globalptr, r2
-
-	bx lr
-@---------------------------------------------------------------------------------
-CPU_reset:	@called by loadcart (r0-r9 are free to use)
-@---------------------------------------------------------------------------------
-	str lr,[sp,#-4]!
-
-@---NTSC/PAL
-	bl ntsc_pal_reset
 @---cpu reset
-	mov m6502_a,#0
-	mov m6502_x,#0
-	mov m6502_y,#0
-	mov m6502_nz,#0
-	adr_ m6502_rmem,readmem_tbl
-	ldr r0,=NES_RAM+0x100
-	str_ r0,m6502_s		@S=0xFD (0x100-3)
+	mov m6502nz,#0
+	mov m6502a,#0
+	mov m6502x,#0
+	mov m6502y,#0
+	adr_ m6502_rmem,m6502ReadTbl
+	add r0,m6502zpage,#0x100
+	str_ r0,m6502RegSP	@S=0xFD (0x100-3)
 	mov cycles,#0		@D=0, C=0, V=0, I=1 disable IRQ.
-
-	str_ m6502_a,frame		@frame count reset
 
 	@(clear irq/nmi/res source)...
 
 	ldr r12,=RES_VECTOR
 	bl Vec6502
 
-	adr_ r0,cpuregs
-	stmia r0,{m6502_nz-m6502_pc}
-	ldr pc,[sp],#4
+	adr_ r0,m6502Regs
+	stmia r0,{m6502nz-m6502pc}
+	ldmfd sp!, {pc}
 @---------------------------------------------------------------------------------
-debugwrite:
+debugWrite:
 	stmfd sp!, {r0-r3, lr}
 	mov r1, addy
 	bl debugwrite_c
 	ldmfd sp!, {r0-r3, pc}
 
 @---------------------------------------------------------------------------------
-debugstep:
+debugStep:
 	stmfd sp!, {r0-r3, lr}
-	adr_ r2,cpuregs
-	stmia r2,{m6502_nz-m6502_pc}		@refresh 6502 state
+	adr_ r2,m6502Regs
+	stmia r2,{m6502nz-m6502pc}		@refresh 6502 state
 	bl stepdebug
 
 	ldmfd sp!, {r0-r3, pc}
@@ -1391,8 +1065,7 @@ debugstep:
 @---------------------------------------------------------------------------------
 .section .dtcm, "aw"
 @---------------------------------------------------------------------------------
-globals:
-op_table:
+m6502OpTable:
 	.word _00,_01,_xx,_xx,_xx,_05,_06,_xx,_08,_09,_0A,_xx,_xx,_0D,_0E,_xx
 	.word _10,_11,_xx,_xx,_xx,_15,_16,_xx,_18,_19,_xx,_xx,_xx,_1D,_1E,_xx
 	.word _20,_21,_xx,_xx,_24,_25,_26,_xx,_28,_29,_2A,_xx,_2C,_2D,_2E,_xx
@@ -1409,174 +1082,17 @@ op_table:
 	.word _D0,_D1,_xx,_xx,_xx,_D5,_D6,_xx,_D8,_D9,_xx,_xx,_xx,_DD,_DE,_xx
 	.word _E0,_E1,_xx,_xx,_E4,_E5,_E6,_xx,_E8,_E9,_EA,_xx,_EC,_ED,_EE,_xx
 	.word _F0,_F1,_xx,_xx,_xx,_F5,_F6,_xx,_F8,_F9,_xx,_xx,_xx,_FD,_FE,_xx
-  @readmem_tbl
-	.word ram_R	@$0000
-	.word PPU_R	@$2000
-	.word IO_R	@$4000
-	.word sram_R	@$6000
-	.word rom_R80	@$8000
-	.word rom_RA0	@$A000
-	.word rom_RC0	@$C000
-	.word rom_RE0	@$E000
-  @writemem_tbl
-	.word ram_W	@$0000
-	.word PPU_W	@$2000
-	.word IO_W	@$4000
-	.word sram_W	@$6000
-	.word rom_W80	@$8000
-	.word rom_WA0	@$A000
-	.word rom_WC0	@$C000
-	.word rom_WE0	@$E000
-   @memmap_tbl
-__memmap_tbl:
-	.word NES_RAM		@$0000   0000-7fff
-	.word NES_XRAM-0x2000	@$2000    should
-	.word NES_XRAM-0x4000	@$4000     never
-	.word NES_SRAM-0x6000	@$6000      change
-rommap:	.skip 4*4			@$8000-FFFF
+  @m6502ReadTbl
+	.skip 8*4	@$0000-FFFF
+  @m6502WriteTbl
+	.skip 8*4	@$0000-FFFF
+  @m6502MemTbl
+	.skip 4*4	@$0000-7FFF
+	.skip 4*4	@$8000-FFFF
 
-cpustate:
-	@group these together for save/loadstate	
-	@.skip 7*4 @cpuregs (nz,c,a,x,y,cycles,pc)
-__nz:
-	.skip 2*4
-__a:
-	.skip 4
-__x:
-	.skip 4
-__y:
-	.skip 4
-__p:
-	.skip 4
-__pc:
-	.skip 4
-__sp:
-	.word 0 @m6502_s:
-__lastbank:
-	.word 0 @lastbank: last memmap added to PC (used to calculate current PC)
+	@group these together for save/loadstate
+	.skip 8*4 @m6502Regs (nz,rmem,a,x,y,cycles,pc,sp)
+	.word 0 @m6502LastBank: last memmap added to PC (used to calculate current PC)
+	.word 0 @m6502NextTimeout:  jump here when cycles runs out
 
-	.word 0 @nexttimeout:  jump here when cycles runs out
-__scanline:
-	.word 0 @scanline
-	.word 0 @scanlinehook
-frametotal:		@let ui.c see frame count for savestates
-	.word 0 @frame
-	.word 0 @cyclesperscanline (341*CYCLE or 320*CYCLE)
-	.word 0 @lastscanline (261 or 311)
-
-	.word 0 @(unused, for alignment)
-	
-@--- ppu ---
-
-FPSValue:
-	.word 0
-	.word 0 @adjustblend
-ppustate:
-	.word 0 @vramaddr
-	.word 0 @vramaddr2 (temp)
-	.word 0 @scrollX
-	.word 0 @scrollY
-	.word 0 @scrollYtemp
-	.word 0 @sprite0y
-	.word 0 @readtemp
-	.word 0 @bg0cnt (mirroring control)
-
-	.byte 0 @sprite0x
-	.byte 1 @vramaddrinc
-	.byte 0 @ppustat
-	.byte 0 @toggle
-	.byte 0 @ppuctrl0
-	.byte 0 @ppuctrl0frame	;state of $2000 at frame start
-	.byte 0 @ppuctrl1
-	.byte 0 @ppuoamadr
-__nes_chr_map:
-	.skip 16	@nes_chr_map 	VROM map for 0000-1FFF (1k bank numbers)
-	
-	.word 0 @vrommask
-	.word 0 @vrombase
-
-@ppustate end
-@**!! update load/savestate if you move things around in here
-
-@--- cart ---
-
-	.word void 	@newframehook.
-	.word void 	@endframehook, for some special VRAM mirrorings.
-__hblankhook:
-	.word void	@hblankhook, for games that need to do something when h-blank occurs.
-	.word void	@ppuchrlatch
-mapperstate:
-	.skip 96	@mapperdata
-
-romstart:
-__rombase:
-	.word 0 	@rombase
-	
-@add others
-	.word 0 	@rommask
-	.word 0 	@romnumber
-	.word 0 	@prgsize8k
-__prgsize16k:
-	.word 0 	@prgsize16k
-	.word 0 	@prgsize32k
-__emuflags:
-	.word 0 	@emuflags
-	.word 0		@prgcrc
-
-	.word 0		@lighty
-
-softrdata:
-	.word 0 	@loopy_t
-	.word 0 	@loopy_x
-	.word 0 	@loopy_y
-	.word 0 	@loopy_v
-	.word 0 	@loopy_shift
-	.word 0 	@bglastline
-__rendercount:
-	.word 0 	@rendercount
-		@tempdata
-	.word 0		@tileofs
-	.word 0		@ntbladr
-	.word 0		@attradr
-	.word 0		@ntbl_x
-	.word 0		@attrsft
-	.word 0		@pNTBL
-	.word 0		@pScn
-	.word 0		@pBGw
-	.word 0		@attr
-	.word BGwrite_data	@BGwrite
-	.word SPwrite_data	@SPwrite
-	.word rev_data	@pBit2Rev
-	.skip 4 * (20 - 12)
-
-nsfheader:
-	.skip 128
-
-__nsfplay:
-	.word 0
-__nsfinit:
-	.word 0
-__nsfsongno:
-	.word 0
-__nsfsongmode:
-	.word 0
-
-all_pix_start:
-	.word 0
-all_pix_end:
-	.word 0
-
-__af_st:
-	.word 0		@af_st
-__af_start:
-	.word 0x101	@af_start 30 fps
-__palsyncline:
-	.word 0
-__cartflags:
-	.byte 0 	@cartflags
-__barcode:
-	.byte 0
-__barcode_out:
-	.byte 0
-	.align
 @---------------------------------------------------------------------------------
