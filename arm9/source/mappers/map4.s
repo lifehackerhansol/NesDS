@@ -2,7 +2,7 @@
 .section .text,"ax"
 @---------------------------------------------------------------------------------
 	#include "equates.h"
-	#include "6502mac.h"
+	#include "M6502mac.h"
 #define	MMC3_IRQ_KLAX		1
 #define	MMC3_IRQ_SHOUGIMEIKAN	2
 #define	MMC3_IRQ_DAI2JISUPER	3

@@ -1,5 +1,5 @@
 #include "equates.h"
-#include "6502mac.h"
+#include "M6502mac.h"
 	.global soft_render
 	.global dmaCopy_s
 	.global nes_palette
