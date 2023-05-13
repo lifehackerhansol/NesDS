@@ -6,9 +6,9 @@ extern "C" {
 #endif
 
 typedef struct {
-	u32 opz[256];
-	u32 readTbl[8];
-	u32 writeTbl[8];
+	void *opz[256];
+	void *readTbl[8];
+	void *writeTbl[8];
 	u32 *memTbl[8];
 
 	u32 regNz;
@@ -19,9 +19,17 @@ typedef struct {
 	u32 cycles;
 	u8 *regPc;
 	u32 regSp;
+	u8 irqPending;
+	u8 nmiPin;
+	u8 padding[2];
 
 	u8 *lastBank;
+	int oldCycles;
 	void *nextTimeout;
+#ifdef DEBUG
+	u32 badOpCount;
+	u32 brkCount;
+#endif
 } M6502Core;
 
 extern M6502Core m6502Base;

@@ -102,7 +102,7 @@ REG_BLDALPHA		= 0x52
 globalptr	.req r10	@ =wram_globals* ptr
 
 start_map 0,globalptr	@6502.s
-_m_ m6502struct, m6502Size
+_m_ m6502struct,m6502Size
 
 @ppuState:
 	@ppu.s
@@ -111,7 +111,6 @@ _m_ scanlineHook,4
 _m_ frame,4
 _m_ cyclesPerScanline,4
 _m_ lastScanline,4
-_m_ unused_align,4
 
 _m_ fpsValue,4
 _m_ adjustBlend,4
@@ -133,6 +132,11 @@ _m_ ppuCtrl0,1
 _m_ ppuCtrl0Frame,1
 _m_ ppuCtrl1,1
 _m_ ppuOamAdr,1
+#if defined DEBUG
+_m_ unused_align,4
+#else
+_m_ unused_align,12
+#endif
 _m_ nesChrMap,16
 
 _m_ loopy_t,4

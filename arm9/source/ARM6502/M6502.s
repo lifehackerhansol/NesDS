@@ -15,13 +15,21 @@
 @---------------------------------------------------------------------------------
 _xx:@	???					@invalid opcode
 @---------------------------------------------------------------------------------
-//	DEBUGCOUNT BADOP
+#ifdef DEBUG
+	ldr_ r1,m6502BadOpCount
+	add r1,r1,#1
+	str_ r1,m6502BadOpCount
+#endif
 	bl debugStep
 	fetch 2
 @---------------------------------------------------------------------------------
 _00:@   BRK
 @---------------------------------------------------------------------------------
-//	DEBUGCOUNT BRK
+#ifdef DEBUG
+	ldr_ r1,m6502BRKCount
+	add r1,r1,#1
+	str_ r1,m6502BRKCount
+#endif
 	bl debugStep
 
 	ldr_ r0,m6502LastBank
@@ -1066,22 +1074,22 @@ debugStep:
 .section .dtcm, "aw"
 @---------------------------------------------------------------------------------
 m6502OpTable:
-	.word _00,_01,_xx,_xx,_xx,_05,_06,_xx,_08,_09,_0A,_xx,_xx,_0D,_0E,_xx
-	.word _10,_11,_xx,_xx,_xx,_15,_16,_xx,_18,_19,_xx,_xx,_xx,_1D,_1E,_xx
-	.word _20,_21,_xx,_xx,_24,_25,_26,_xx,_28,_29,_2A,_xx,_2C,_2D,_2E,_xx
-	.word _30,_31,_xx,_xx,_xx,_35,_36,_xx,_38,_39,_xx,_xx,_xx,_3D,_3E,_xx
-	.word _40,_41,_xx,_xx,_xx,_45,_46,_xx,_48,_49,_4A,_xx,_4C,_4D,_4E,_xx
-	.word _50,_51,_xx,_xx,_xx,_55,_56,_xx,_58,_59,_xx,_xx,_xx,_5D,_5E,_xx
-	.word _60,_61,_xx,_xx,_xx,_65,_66,_xx,_68,_69,_6A,_xx,_6C,_6D,_6E,_xx
-	.word _70,_71,_xx,_xx,_xx,_75,_76,_xx,_78,_79,_xx,_xx,_xx,_7D,_7E,_xx
-	.word _xx,_81,_xx,_xx,_84,_85,_86,_xx,_88,_xx,_8A,_xx,_8C,_8D,_8E,_xx
-	.word _90,_91,_xx,_xx,_94,_95,_96,_xx,_98,_99,_9A,_xx,_xx,_9D,_xx,_xx
-	.word _A0,_A1,_A2,_xx,_A4,_A5,_A6,_xx,_A8,_A9,_AA,_xx,_AC,_AD,_AE,_xx
-	.word _B0,_B1,_xx,_xx,_B4,_B5,_B6,_xx,_B8,_B9,_BA,_xx,_BC,_BD,_BE,_xx
-	.word _C0,_C1,_xx,_xx,_C4,_C5,_C6,_xx,_C8,_C9,_CA,_xx,_CC,_CD,_CE,_xx
-	.word _D0,_D1,_xx,_xx,_xx,_D5,_D6,_xx,_D8,_D9,_xx,_xx,_xx,_DD,_DE,_xx
-	.word _E0,_E1,_xx,_xx,_E4,_E5,_E6,_xx,_E8,_E9,_EA,_xx,_EC,_ED,_EE,_xx
-	.word _F0,_F1,_xx,_xx,_xx,_F5,_F6,_xx,_F8,_F9,_xx,_xx,_xx,_FD,_FE,_xx
+	.long _00,_01,_xx,_xx,_xx,_05,_06,_xx,_08,_09,_0A,_xx,_xx,_0D,_0E,_xx
+	.long _10,_11,_xx,_xx,_xx,_15,_16,_xx,_18,_19,_xx,_xx,_xx,_1D,_1E,_xx
+	.long _20,_21,_xx,_xx,_24,_25,_26,_xx,_28,_29,_2A,_xx,_2C,_2D,_2E,_xx
+	.long _30,_31,_xx,_xx,_xx,_35,_36,_xx,_38,_39,_xx,_xx,_xx,_3D,_3E,_xx
+	.long _40,_41,_xx,_xx,_xx,_45,_46,_xx,_48,_49,_4A,_xx,_4C,_4D,_4E,_xx
+	.long _50,_51,_xx,_xx,_xx,_55,_56,_xx,_58,_59,_xx,_xx,_xx,_5D,_5E,_xx
+	.long _60,_61,_xx,_xx,_xx,_65,_66,_xx,_68,_69,_6A,_xx,_6C,_6D,_6E,_xx
+	.long _70,_71,_xx,_xx,_xx,_75,_76,_xx,_78,_79,_xx,_xx,_xx,_7D,_7E,_xx
+	.long _xx,_81,_xx,_xx,_84,_85,_86,_xx,_88,_xx,_8A,_xx,_8C,_8D,_8E,_xx
+	.long _90,_91,_xx,_xx,_94,_95,_96,_xx,_98,_99,_9A,_xx,_xx,_9D,_xx,_xx
+	.long _A0,_A1,_A2,_xx,_A4,_A5,_A6,_xx,_A8,_A9,_AA,_xx,_AC,_AD,_AE,_xx
+	.long _B0,_B1,_xx,_xx,_B4,_B5,_B6,_xx,_B8,_B9,_BA,_xx,_BC,_BD,_BE,_xx
+	.long _C0,_C1,_xx,_xx,_C4,_C5,_C6,_xx,_C8,_C9,_CA,_xx,_CC,_CD,_CE,_xx
+	.long _D0,_D1,_xx,_xx,_xx,_D5,_D6,_xx,_D8,_D9,_xx,_xx,_xx,_DD,_DE,_xx
+	.long _E0,_E1,_xx,_xx,_E4,_E5,_E6,_xx,_E8,_E9,_EA,_xx,_EC,_ED,_EE,_xx
+	.long _F0,_F1,_xx,_xx,_xx,_F5,_F6,_xx,_F8,_F9,_xx,_xx,_xx,_FD,_FE,_xx
   @m6502ReadTbl
 	.skip 8*4	@$0000-FFFF
   @m6502WriteTbl
@@ -1092,7 +1100,15 @@ m6502OpTable:
 
 	@group these together for save/loadstate
 	.skip 8*4 @m6502Regs (nz,rmem,a,x,y,cycles,pc,sp)
-	.word 0 @m6502LastBank: last memmap added to PC (used to calculate current PC)
-	.word 0 @m6502NextTimeout:  jump here when cycles runs out
+	.byte 0 	;@ m6502IrqPending
+	.byte 0 	;@ m6502NMIPin
+	.skip 2		;@ padding
+
+	.long 0		;@ LastBank:		Last memmap added to PC (used to calculate current PC)
+	.long 0 	;@ OldCycles:		Backup of cycles
+	.long 0		;@ NextTimeout:		Jump here when cycles runs out
+#ifdef DEBUG
+	.skip 2*4
+#endif
 
 @---------------------------------------------------------------------------------

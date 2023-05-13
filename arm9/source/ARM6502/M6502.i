@@ -32,16 +32,24 @@ m6502WriteTbl:		.skip 8*4
 m6502MemTbl:		.skip 8*4
 m6502StateStart:
 m6502Regs:
-m6502RegNZ:			.skip 4
-m6502rmem:			.skip 4
-m6502RegA:			.skip 4
-m6502RegX:			.skip 4
-m6502RegY:			.skip 4
-m6502Cycles:		.skip 4
-m6502RegPC:			.skip 4
-m6502RegSP:			.skip 4
-m6502LastBank:		.skip 4
-m6502NextTimeout:	.skip 4
+m6502RegNZ:			.long 0
+m6502rmem:			.long 0
+m6502RegA:			.long 0
+m6502RegX:			.long 0
+m6502RegY:			.long 0
+m6502Cycles:		.long 0
+m6502RegPC:			.long 0
+m6502RegSP:			.long 0
+m6502IrqPending:	.byte 0
+m6502NMIPin:		.byte 0
+m6502Padding:		.skip 2
+m6502LastBank:		.long 0
+m6502OldCycles:		.long 0
+m6502NextTimeout:	.long 0
+#ifdef DEBUG
+m6502BadOpCount:	.long 0
+m6502BRKCount:		.long 0
+#endif
 m6502Size:
 
 ;@----------------------------------------------------------------------------

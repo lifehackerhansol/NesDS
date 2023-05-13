@@ -60,6 +60,10 @@ int debugdump() {
 		return 0;*/
 
 	debuginfo[21] = globals.emuFlags;
+#ifdef DEBUG
+	debuginfo[BRK] = globals.cpu.brkCount;
+	debuginfo[BADOP] = globals.cpu.badOpCount;
+#endif
 	if(1 && (globals.emuFlags & NSFFILE)) {
 		u32 *ip=(u32*)&globals.mapperData;
 		consoletext	(64 * 4 + 0 * 32, "version", 0);
@@ -91,7 +95,7 @@ int debugdump() {
 		for(i = 0; i < 4; i++) {
 			hex32(64 * 20 + i * 32, (u32)m6502Base.memTbl[i + 4] + 0x2000 * i + 0x8000);
 		}
-	} else if(debuginfo[16] == 20) {
+	} else if(debuginfo[MAPPER] == 20) {
 		u8 *p=(u8*)&globals.mapperData;//0x7000000;
 		u32 *ip=(u32*)&globals.mapperData;//0x7000000;
 		for(i=0;i<18;i++) {

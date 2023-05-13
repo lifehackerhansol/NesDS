@@ -677,7 +677,7 @@ no_sync:
 @---
 soft_sync:
 	ldr_ r0, emuFlags
-	DEBUGINFO 20, r0
+	DEBUGINFO GAMEID, r0
 
 	stmfd sp!, {r4-r12}
 	bl scanlinestart
