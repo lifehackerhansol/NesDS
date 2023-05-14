@@ -79,7 +79,7 @@ NSF_Run:
 	ldr r0,=NES_RAM+0x100
 	str_ r0, m6502RegSP
 	orr cycles,#CYC_I
-	
+
 	mov r0, #0
 	ldr r1, =__nsfInit
 	str r0, [r1]

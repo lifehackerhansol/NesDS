@@ -13,16 +13,6 @@
 @---------------------------------------------------------------------------------
 .section .itcm, "ax"
 @---------------------------------------------------------------------------------
-_xx:@	???					@invalid opcode
-@---------------------------------------------------------------------------------
-#ifdef DEBUG
-	ldr_ r1,m6502BadOpCount
-	add r1,r1,#1
-	str_ r1,m6502BadOpCount
-#endif
-	bl debugStep
-	fetch 2
-@---------------------------------------------------------------------------------
 _00:@   BRK
 @---------------------------------------------------------------------------------
 #ifdef DEBUG
@@ -1021,9 +1011,7 @@ VecCont:
 @	bic cycles,cycles,#CYC_D	@ and decimal mode
 
 	ldr_ r0,m6502MemTbl+7*4
-	ldrb m6502pc,[r0,r12]!
-	ldrb r2,[r0,#1]
-	orr m6502pc,m6502pc,r2,lsl#8
+	ldrh m6502pc,[r0,r12]
 	encodePC					@ Get IRQ vector
 
 	bx lr
@@ -1031,6 +1019,16 @@ VecCont:
 IRQ_VECTOR		= 0xfffe @ IRQ/BRK interrupt vector address
 RES_VECTOR		= 0xfffc @ RESET interrupt vector address
 NMI_VECTOR		= 0xfffa @ NMI interrupt vector address
+@---------------------------------------------------------------------------------
+_xx:@	???					@invalid opcode
+@---------------------------------------------------------------------------------
+#ifdef DEBUG
+	ldr_ r1,m6502BadOpCount
+	add r1,r1,#1
+	str_ r1,m6502BadOpCount
+#endif
+	bl debugStep
+	fetch 2
 @---------------------------------------------------------------------------------
 m6502Reset:	@ Called by CPU_Reset (r0-r9 are free to use)
 @---------------------------------------------------------------------------------
@@ -1108,7 +1106,8 @@ m6502OpTable:
 	.long 0 	;@ OldCycles:		Backup of cycles
 	.long 0		;@ NextTimeout:		Jump here when cycles runs out
 #ifdef DEBUG
-	.skip 2*4
+	.long 0		;@ BRKCount
+	.long 0		;@ BadOpCount
 #endif
 
 @---------------------------------------------------------------------------------

@@ -27,8 +27,8 @@ typedef struct {
 	int oldCycles;
 	void *nextTimeout;
 #ifdef DEBUG
-	u32 badOpCount;
 	u32 brkCount;
+	u32 badOpCount;
 #endif
 } M6502Core;
 

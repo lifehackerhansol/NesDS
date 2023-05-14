@@ -47,8 +47,8 @@ m6502LastBank:		.long 0
 m6502OldCycles:		.long 0
 m6502NextTimeout:	.long 0
 #ifdef DEBUG
-m6502BadOpCount:	.long 0
 m6502BRKCount:		.long 0
+m6502BadOpCount:	.long 0
 #endif
 m6502Size:
 

@@ -1035,26 +1035,14 @@ VRAM_pal:	@($3F00-$3F1F)
 	bmi VRAM_name3
 
 	and r0,r0,#0x3f		@(only colors 0-63 are valid)
-	and addy,addy,#0x1f
-		tst addy,#0x0f
-		moveq addy,#0	@$10 mirror to $00
-	adr r1,nes_palette
 	orr r2, r0, #0xc0	@something wrong...
-	strb r2,[r1,addy]	@store in nes palette
+	and addy,addy,#0x1f
+		tst addy,#0x03
+		biceq addy,#0x10	@$10,$14,$18,$1C mirror to $00,$04,$08,$0C
+	adr r1,nes_palette
+	strb r2,[r1,addy]!	@store in nes palette
+	strbeq r2, [r1, #16]
 
-	tst addy, #3
-	bne 0f
-
-	ldrb r2, [r1]
-	strb r2, [r1, #4]
-	strb r2, [r1, #8]
-	strb r2, [r1, #12]
-	strb r2, [r1, #16]
-	strb r2, [r1, #20]
-	strb r2, [r1, #24]
-	strb r2, [r1, #28]
-0:
-	
 	add r0,r0,r0
 	ldr r1,=MAPPED_RGB
 @	ldr r0,[r1,r0,lsl#1]	@lookup RGB, unaligned read.
