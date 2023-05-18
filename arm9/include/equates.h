@@ -2,6 +2,7 @@
 @	VERSION_IN_ROM = 0  @out of pocketnes ??
 	#include "macro.h"
 	#include "M6502.i"
+	#include "RP2C02.i"
 DEBUG		= 1
 DEBUGSTEP	= 0
 @----------------------------------------------------------------------------
@@ -48,7 +49,6 @@ MAPPED_RGB		= CHR_DECODE+0x400
 NES_SPRAM		= MAPPED_RGB+0x100	@mapped NES palette (for VS unisys)
 @?			EQU MAPPED_RGB+64*3
 
-NDS_PALETTE		= 0x5000000
 NDS_VRAM		= 0x6000000
 NDS_SRAM		= 0xA000000
 NDS_OAM			= 0x7000000
@@ -103,77 +103,7 @@ globalptr	.req r10	@ =wram_globals* ptr
 
 start_map 0,globalptr	@6502.s
 _m_ m6502struct,m6502Size
-
-@ppuState:
-	@ppu.s
-_m_ scanline,4
-_m_ scanlineHook,4
-_m_ frame,4
-_m_ cyclesPerScanline,4
-_m_ lastScanline,4
-
-_m_ fpsValue,4
-_m_ adjustBlend,4
-
-_m_ ppuState,0
-_m_ vramAddr,4
-_m_ vramAddr2,4
-_m_ scrollX,4
-_m_ scrollY,4
-_m_ scrollYTemp,4
-_m_ sprite0Y,4
-_m_ readTemp,4
-_m_ bg0Cnt,4
-_m_ ppuBusLatch,1
-_m_ sprite0X,1
-_m_ vramAddrInc,1
-_m_ ppuStat,1
-_m_ toggle,1
-_m_ ppuCtrl0,1
-_m_ ppuCtrl0Frame,1
-_m_ ppuCtrl1,1
-_m_ ppuOamAdr,1
-_m_ unused_align,3
-#if !defined DEBUG
-_m_ unusedAlign2,8
-#endif
-_m_ nesChrMap,16
-
-_m_ loopy_t,4
-_m_ loopy_x,4
-_m_ loopy_y,4
-_m_ loopy_v,4
-_m_ loopy_shift,4
-
-_m_ vromMask,4
-_m_ vromBase,4
-_m_ palSyncLine, 4
-
-_m_ pixStart, 4
-_m_ pixEnd, 4
-
-_m_ newFrameHook,4
-_m_ endFrameHook,4
-_m_ hblankHook,4
-_m_ ppuChrLatch,4
-
-_m_ mapperData,96
-
-_m_ romBase,4
-_m_ romMask,4     @ADDED
-_m_ prgSize8k,4     @ADDED
-_m_ prgSize16k,4     @ADDED
-_m_ prgSize32k,4     @ADDED
-_m_ emuFlags,4 @ADDED
-_m_ prgcrc,4
-
-_m_ lightY,4
-
-_m_ renderCount, 4
-_m_ tempData, 20*4
-
-_m_ cartFlags,1 @ADDED
-_m_ padding,3 @align   @ADDED
+_m_ rp2C02struct,rp2C02Size
 _m_ nesMachineSize,0
 
 @-----------------------joyflags

@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include "M6502.h"
-#include "NesPpu.h"
+#include "RP2C02.h"
 
 typedef struct {
 	M6502Core cpu;
