@@ -124,6 +124,7 @@ _m_ scrollYTemp,4
 _m_ sprite0Y,4
 _m_ readTemp,4
 _m_ bg0Cnt,4
+_m_ ppuBusLatch,1
 _m_ sprite0X,1
 _m_ vramAddrInc,1
 _m_ ppuStat,1
@@ -132,10 +133,9 @@ _m_ ppuCtrl0,1
 _m_ ppuCtrl0Frame,1
 _m_ ppuCtrl1,1
 _m_ ppuOamAdr,1
-#if defined DEBUG
-_m_ unused_align,4
-#else
-_m_ unused_align,12
+_m_ unused_align,3
+#if !defined DEBUG
+_m_ unusedAlign2,8
 #endif
 _m_ nesChrMap,16
 

@@ -11,7 +11,6 @@ typedef struct {
 	u32 frame;
 	u32 cyclesPerScanline;
 	u32 lastScanline;
-	u32 unused_align;
 
 	u32 fpsValue;
 	u32 adjustBlend;
@@ -24,6 +23,7 @@ typedef struct {
 	u32 sprite0Y;
 	u32 readTemp;
 	u32 bg0Cnt;
+	u8 ppuBusLatch;
 	u8 sprite0X;
 	u8 vramAddrInc;
 	u8 ppuStat;
@@ -32,6 +32,10 @@ typedef struct {
 	u8 ppuCtrl0Frame;
 	u8 ppuCtrl1;
 	u8 ppuOamAdr;
+	u8 unused_align[3];
+#if !defined DEBUG
+	u32 unusedAlign2[2];
+#endif
 	u16 nesChrMap[8];
 
 	u32 loopy_t;

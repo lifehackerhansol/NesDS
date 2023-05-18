@@ -34,6 +34,8 @@ typedef struct {
 
 extern M6502Core m6502Base;
 
+void m6502Init(M6502Core *cpu);
+
 void m6502Reset(M6502Core *cpu);
 
 void m6502SetNMIPin(bool set);

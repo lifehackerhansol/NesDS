@@ -312,9 +312,7 @@ CPU_reset:	@ Called by loadcart (r0-r9 are free to use)
 	stmfd sp!,{lr}
 
 	ldr r0,=globals
-	ldr r1,=m6502OpTable
-	mov r2,#256*4
-	bl memcpy
+	bl m6502Init
 
 @---NTSC/PAL
 	bl ntsc_pal_reset

@@ -5,6 +5,7 @@
 	.global PPU_reset
 	.global PPU_R
 	.global PPU_W
+	.global ppuOamDataW
 	.global agb_nt_map
 	.global vram_map
 	.global vram_write_tbl
@@ -710,6 +711,7 @@ PPU_read_tbl:
 @---------------------------------------------------------------------------------
 PPU_W:@
 @---------------------------------------------------------------------------------
+	strb_ r0,ppuBusLatch
 	and r2,addy,#7
 	ldr pc,[pc,r2,lsl#2]
 	.word 0
@@ -717,15 +719,15 @@ PPU_write_tbl:
 	.word ctrl0_W		@$2000
 	.word ctrl1_W		@$2001
 	.word void			@$2002
-	.word void			@$2003
-	.word void			@$2004
+	.word oamAddr_W		@$2003
+	.word ppuOamDataW	@$2004
 	.word bgscroll_W	@$2005
 	.word vmaddr_W		@$2006
 	.word vmdata_W		@$2007
 @---------------------------------------------------------------------------------
 empty_PPU_R:
 @---------------------------------------------------------------------------------
-	mov r0,#0
+	ldrb_ r0,ppuBusLatch
 	bx lr
 @---------------------------------------------------------------------------------
 ctrl0_W:		@(2000)
@@ -812,6 +814,20 @@ stat_R:		@(2002)
 	tst r1, #0x10
 	biceq r0, #0x60
 
+	bx lr
+@---------------------------------------------------------------------------------
+oamAddr_W:		@(2003)
+@---------------------------------------------------------------------------------
+	strb_ r0,ppuOamAdr
+	bx lr
+@---------------------------------------------------------------------------------
+ppuOamDataW:	@(2004)
+@---------------------------------------------------------------------------------
+	ldrb_ r1,ppuOamAdr
+	ldr r2,=NES_SPRAM
+	strb r0,[r2,r1]
+	add r1,r1,#1
+	strb_ r1,ppuOamAdr
 	bx lr
 @---------------------------------------------------------------------------------
 bgscroll_W:	@(2005)
@@ -1041,7 +1057,7 @@ VRAM_pal:	@($3F00-$3F1F)
 		biceq addy,#0x10	@$10,$14,$18,$1C mirror to $00,$04,$08,$0C
 	adr r1,nes_palette
 	strb r2,[r1,addy]!	@store in nes palette
-	strbeq r2, [r1, #16]
+	streqb r2, [r1, #16]
 
 	add r0,r0,r0
 	ldr r1,=MAPPED_RGB

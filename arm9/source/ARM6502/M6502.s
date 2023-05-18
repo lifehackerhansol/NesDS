@@ -1,7 +1,8 @@
 @---------------------------------------------------------------------------------
 	#include "M6502mac.h"
 	#include "macro.h"
-@---------------------------------------------------------------------------------	
+@---------------------------------------------------------------------------------
+	.global m6502Init
 	.global m6502Reset
 	.global defaultScanlineHook
 	.global Vec6502
@@ -1029,6 +1030,13 @@ _xx:@	???					@invalid opcode
 #endif
 	bl debugStep
 	fetch 2
+;@----------------------------------------------------------------------------
+m6502Init:				;@ In r0=m6502ptr.
+;@----------------------------------------------------------------------------
+	add r0,r0,#m6502Opz
+	adr r1,m6502OpTable
+	mov r2,#256*4
+	b memcpy
 @---------------------------------------------------------------------------------
 m6502Reset:	@ Called by CPU_Reset (r0-r9 are free to use)
 @---------------------------------------------------------------------------------
@@ -1069,8 +1077,6 @@ debugStep:
 	ldmfd sp!, {r0-r3, pc}
 
 @---------------------------------------------------------------------------------
-.section .dtcm, "aw"
-@---------------------------------------------------------------------------------
 m6502OpTable:
 	.long _00,_01,_xx,_xx,_xx,_05,_06,_xx,_08,_09,_0A,_xx,_xx,_0D,_0E,_xx
 	.long _10,_11,_xx,_xx,_xx,_15,_16,_xx,_18,_19,_xx,_xx,_xx,_1D,_1E,_xx
@@ -1088,26 +1094,5 @@ m6502OpTable:
 	.long _D0,_D1,_xx,_xx,_xx,_D5,_D6,_xx,_D8,_D9,_xx,_xx,_xx,_DD,_DE,_xx
 	.long _E0,_E1,_xx,_xx,_E4,_E5,_E6,_xx,_E8,_E9,_EA,_xx,_EC,_ED,_EE,_xx
 	.long _F0,_F1,_xx,_xx,_xx,_F5,_F6,_xx,_F8,_F9,_xx,_xx,_xx,_FD,_FE,_xx
-  @m6502ReadTbl
-	.skip 8*4	@$0000-FFFF
-  @m6502WriteTbl
-	.skip 8*4	@$0000-FFFF
-  @m6502MemTbl
-	.skip 4*4	@$0000-7FFF
-	.skip 4*4	@$8000-FFFF
-
-	@group these together for save/loadstate
-	.skip 8*4 @m6502Regs (nz,rmem,a,x,y,cycles,pc,sp)
-	.byte 0 	;@ m6502IrqPending
-	.byte 0 	;@ m6502NMIPin
-	.skip 2		;@ padding
-
-	.long 0		;@ LastBank:		Last memmap added to PC (used to calculate current PC)
-	.long 0 	;@ OldCycles:		Backup of cycles
-	.long 0		;@ NextTimeout:		Jump here when cycles runs out
-#ifdef DEBUG
-	.long 0		;@ BRKCount
-	.long 0		;@ BadOpCount
-#endif
 
 @---------------------------------------------------------------------------------
