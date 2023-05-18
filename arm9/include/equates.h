@@ -104,6 +104,23 @@ globalptr	.req r10	@ =wram_globals* ptr
 start_map 0,globalptr	@6502.s
 _m_ m6502struct,m6502Size
 _m_ rp2C02struct,rp2C02Size
+_m_ mapperData,96
+
+_m_ romBase,4
+_m_ romMask,4
+_m_ prgSize8k,4
+_m_ prgSize16k,4
+_m_ prgSize32k,4
+_m_ emuFlags,4
+_m_ prgcrc,4
+
+_m_ lightY,4
+
+_m_ renderCount, 4
+_m_ tempData, 20*4
+
+_m_ cartFlags,1
+_m_ padding,3 @align
 _m_ nesMachineSize,0
 
 @-----------------------joyflags

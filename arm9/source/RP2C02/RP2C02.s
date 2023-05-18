@@ -379,6 +379,13 @@ PPU_reset:
 @---------------------------------------------------------------------------------
 	stmfd sp!,{lr}
 
+	ldr_ r1,emuFlags
+	tst r1,#PALTIMING
+
+	ldreq r0,=261			@NTSC
+	ldrne r0,=311			@PAL
+	str_ r0,lastScanline
+
 	mov r0,#1
 	strb_ r0,vramAddrInc
 
@@ -386,6 +393,7 @@ PPU_reset:
 	strb_ r0,ppuCtrl0	@NMI off
 	strb_ r0,ppuCtrl1	@screen off
 	strb_ r0,ppuStat	@flags off
+	str_ r0,frame		@frame count reset
 
 	mov r0,#0
 	ldr r1,=NES_VRAM

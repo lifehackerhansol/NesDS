@@ -5,9 +5,9 @@
 	.global m6502Init
 	.global m6502Reset
 	.global defaultScanlineHook
+	.global irq6502
 	.global Vec6502
 	.global m6502NMI
-	.global CheckI
 
 	.global m6502OpTable
 
@@ -982,11 +982,6 @@ _FE:@   INC $nnnn,X
 defaultScanlineHook:
 @---------------------------------------------------------------------------------
 	fetch 0
-@---------------------------------------------------------------------------------
-CheckI:							@ Check Interrupt Disable
-@---------------------------------------------------------------------------------
-	tst cycles,#CYC_I
-	bne defaultScanlineHook		@ We dont want no stinkin irqs
 @---------------------------------------------------------------------------------
 irq6502:
 @---------------------------------------------------------------------------------

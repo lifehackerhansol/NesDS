@@ -34,7 +34,7 @@ typedef struct {
 	u8 ppuOamAdr;
 	u8 unused_align[3];
 #if !defined DEBUG
-	u32 unusedAlign2[2];
+	u8 unusedAlign2[8];
 #endif
 	u16 nesChrMap[8];
 

@@ -59,23 +59,6 @@ _m_ endFrameHook,4
 _m_ hblankHook,4
 _m_ ppuChrLatch,4
 
-_m_ mapperData,96
-
-_m_ romBase,4
-_m_ romMask,4     @ADDED
-_m_ prgSize8k,4     @ADDED
-_m_ prgSize16k,4     @ADDED
-_m_ prgSize32k,4     @ADDED
-_m_ emuFlags,4 @ADDED
-_m_ prgcrc,4
-
-_m_ lightY,4
-
-_m_ renderCount, 4
-_m_ tempData, 20*4
-
-_m_ cartFlags,1 @ADDED
-_m_ padding,3 @align   @ADDED
 rp2C02Size:
 
 ;@----------------------------------------------------------------------------

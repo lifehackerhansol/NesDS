@@ -8,6 +8,7 @@
 	.global EMU_Run
 	.global CPU_reset
 	.global pcm_scanlineHook
+	.global CheckI
 	.global ntsc_pal_reset
 
 pcmirqbakup = mapperData+24
@@ -225,18 +226,17 @@ EMU_Run:
 	stmfd sp!,{m6502nz-m6502pc,globalptr,m6502zpage,lr}
 
 	ldr globalptr,=globals
-	ldr m6502zpage,=NES_RAM
+	ldr_ m6502zpage,m6502MemTbl+0
 
 	adr_ r0,m6502Regs
 	ldmia r0,{m6502nz-m6502pc}	@restore 6502 state
 
-
 	ldr_ r0,cyclesPerScanline
 	add cycles,cycles,r0
-	
+
 	mov r0,#241
 	str_ r0,scanline
-	
+
 	adr r1,line242_to_end
 	str_ r1,m6502NextTimeout
 
@@ -286,6 +286,15 @@ pcm_scanlineHook:
 	str r2,[addy]
 	bne CheckI
 hk0:
+defaultScanlineHook:
+	fetch 0
+
+@---------------------------------------------------------------------------------
+CheckI:					@ Check Interrupt Disable
+@---------------------------------------------------------------------------------
+	tst cycles,#CYC_I
+	ldreq r12,=0xFFFE
+	beq irq6502				@ Take irq
 	fetch 0
 @---------------------------------------------------------------------------------
 ntsc_pal_reset:
@@ -294,15 +303,13 @@ ntsc_pal_reset:
 	mov r2, globalptr
 	ldr globalptr,=globals
 
-	ldr_ r0,emuFlags
-	tst r0,#PALTIMING
-	
+	ldr_ r1,emuFlags
+	tst r1,#PALTIMING
+
 	ldreq r1,=341*CYCLE		@NTSC		(113+2/3)*3
 	ldrne r1,=320*CYCLE		@PAL		(106+9/16)*3
+//	mov r1,#113*CYCLE
 	str_ r1,cyclesPerScanline
-	ldreq r1,=261			@NTSC
-	ldrne r1,=311			@PAL
-	str_ r1,lastScanline
 	mov globalptr, r2
 
 	bx lr
@@ -318,8 +325,6 @@ CPU_reset:	@ Called by loadcart (r0-r9 are free to use)
 	bl ntsc_pal_reset
 
 	bl m6502Reset
-	mov r0,#0
-	str_ r0,frame		@frame count reset
 
 	ldmfd sp!,{lr}
 	bx lr

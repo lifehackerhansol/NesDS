@@ -1,10 +1,10 @@
 
 				;@ r0,r1,r2=temp regs
 	m6502nz		.req r3			;@ Bit 31=N, Z=1 if bits 0-7=0
-	m6502_rmem	.req r4			;@ m6502ReadTbl
-	m6502a		.req r5			;@ Bits 0-23=0, also used to clear bytes in memory
-	m6502x		.req r6			;@ Bits 0-23=0
-	m6502y		.req r7			;@ Bits 0-23=0
+	m6502a		.req r4			;@ Bits 0-23=0, also used to clear bytes in memory
+	m6502x		.req r5			;@ Bits 0-23=0
+	m6502y		.req r6			;@ Bits 0-23=0
+	m6502_rmem	.req r7			;@ m6502ReadTbl
 	cycles		.req r8			;@ Also VDIC flags
 	m6502pc		.req r9
 	globalptr	.req r10		;@ =wram_globals* ptr
@@ -33,10 +33,10 @@ m6502MemTbl:		.skip 8*4
 m6502StateStart:
 m6502Regs:
 m6502RegNZ:			.long 0
-m6502rmem:			.long 0
 m6502RegA:			.long 0
 m6502RegX:			.long 0
 m6502RegY:			.long 0
+m6502rmem:			.long 0
 m6502Cycles:		.long 0
 m6502RegPC:			.long 0
 m6502RegSP:			.long 0
