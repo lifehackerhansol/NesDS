@@ -12,10 +12,10 @@ typedef struct {
 	u32 *memTbl[8];
 
 	u32 regNz;
-	u32 regrmem;
 	u32 regA;
 	u32 regX;
 	u32 regY;
+	u32 regrmem;
 	u32 cycles;
 	u8 *regPc;
 	u32 regSp;
@@ -31,8 +31,6 @@ typedef struct {
 	u32 badOpCount;
 #endif
 } M6502Core;
-
-extern M6502Core m6502Base;
 
 void m6502Init(M6502Core *cpu);
 

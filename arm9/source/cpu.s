@@ -27,7 +27,7 @@ pcmirqcount = mapperData+28
 NSF_Run:
 @---------------------------------------------------------------------------------
 	adr r1,nsfOut
-	str_ r1,m6502NextTimeout
+	str r1,returnAddress
 
 	ldr r0, =__nsfPlay
 	ldr r0, [r0]
@@ -134,10 +134,10 @@ line0:
 	ldr_ r0,cyclesPerScanline
 	ldr_ r1,frame
 	tst r1,#1
-	subeq r0,r0,#CYCLE			@ Every other frame has 1/3 less CPU cycle.
+	subeq r0,r0,#CYCLE			@ Every other frame has 1 less PPU cycle.
 	add cycles,cycles,r0
 	adr r0,line1_to_119
-	str_ r0,m6502NextTimeout
+	str r0,returnAddress
 	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line1_to_119:
@@ -160,7 +160,7 @@ line119:
 	strb_ r0,ppuCtrl0Frame		@ Contra likes this
 
 	adr addy,line120_to_240
-	str_ addy,m6502NextTimeout
+	str addy,returnAddress
 	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line120_to_240:
@@ -173,12 +173,12 @@ line120_to_240:
 
 	cmp r0,#240
 	adreq addy,line241
-	streq_ addy,m6502NextTimeout
+	streq addy,returnAddress
 	blne ppusync
 	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line241:
-NMIDELAY = CYCLE*21
+NMIDELAY = 21*CYCLE
 
 
 	add cycles,cycles,#NMIDELAY	@ NMI is delayed a few cycles..
@@ -189,7 +189,7 @@ NMIDELAY = CYCLE*21
 	strb_ r1,ppuStat
 
 	adr addy,line241NMI
-	str_ addy,m6502NextTimeout
+	str addy,returnAddress
 //	b defaultScanlineHook
 	b handleScanlineHook
 @---------------------------------------------------------------------------------
@@ -203,7 +203,7 @@ line241NMI:
 	beq 0f			@ NMI?
 
 	bl m6502NMI
-	sub cycles,cycles,#3*7*CYCLE
+	sub cycles,cycles,#7*3*CYCLE
 0:
 	sub cycles,cycles,#NMIDELAY
 
@@ -238,7 +238,7 @@ EMU_Run:
 	str_ r0,scanline
 
 	adr r1,line242_to_end
-	str_ r1,m6502NextTimeout
+	str r1,returnAddress
 
 	ldr_ r1,emuFlags
 	tst r1, #NSFFILE
@@ -258,8 +258,32 @@ line242_to_end:
 	bne handleScanlineHook
 
 	adr addy,line0
-	str_ addy,m6502NextTimeout
+	str addy,returnAddress
 	b handleScanlineHook
+
+returnAddress:
+	.long 0
+;@----------------------------------------------------------
+//m6502NMI:
+;@----------------------------------------------------------
+	ldr r12,=0xFFFA
+	loadLastBank r0
+	sub r0,m6502pc,r0
+	push16						;@ Save PC
+
+	encodeP (R)					;@ Save P
+	push8 r0
+
+	orr cycles,cycles,#CYC_I	;@ Disable IRQ
+#if !defined(CPU_RP2A03)
+	bic cycles,cycles,#CYC_D	;@ and decimal mode?
+#endif
+	ldr r0,[m6502ptr,#m6502MemTbl+7*4]
+	ldrh m6502pc,[r0,r12]
+	encodePC					;@ Get IRQ vector
+
+	bx lr
+
 @---------------------------------------------------------------------------------
 pcm_scanlineHook:
 @---------------------------------------------------------------------------------
@@ -290,7 +314,7 @@ defaultScanlineHook:
 	b m6502Go
 
 handleScanlineHook:
-	ldr_ lr,m6502NextTimeout
+	ldr lr,returnAddress
 	stmfd sp!,{lr}
 	ldr_ pc,scanlineHook
 @---------------------------------------------------------------------------------

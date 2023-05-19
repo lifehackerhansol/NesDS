@@ -24,7 +24,7 @@ _00:@   BRK
 #endif
 	bl debugStep
 
-	ldr_ r0,m6502LastBank
+	loadLastBank r0
 	sub r1,m6502pc,r0
 	add r0,r1,#1
 	push16			@save PC
@@ -142,7 +142,7 @@ _1E:@   ASL $nnnn,X
 _20:@   JSR $nnnn
 @---------------------------------------------------------------------------------
 	ldrb r2,[m6502pc],#1
-	ldr_ r1,m6502LastBank
+	loadLastBank r1
 	sub r0,m6502pc,r1
 	ldrb r1,[m6502pc]
 	orr m6502pc,r2,r1,lsl#8
@@ -1003,7 +1003,7 @@ m6502NMI:
 @---------------------------------------------------------------------------------
 Vec6502:
 @---------------------------------------------------------------------------------
-	ldr_ r0,m6502LastBank
+	loadLastBank r0
 	sub r0,m6502pc,r0
 	push16						@ Save PC
 

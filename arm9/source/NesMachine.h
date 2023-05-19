@@ -30,6 +30,7 @@ typedef struct {
 	u8 padding[3];
 } NESCore;
 
+extern M6502Core m6502Base;
 extern NESCore globals;
 
 #ifdef __cplusplus

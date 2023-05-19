@@ -28,6 +28,10 @@ N = 0x80
 	msr cpsr_cf,r0
 .endm
 
+.macro loadLastBank reg
+	ldr \reg,[m6502ptr,#m6502LastBank]
+.endm
+
 .macro encodePC		@translate from 6502 PC to rom offset
 	and r1,m6502pc,#0xE000
 	adr_ r2,m6502MemTbl
