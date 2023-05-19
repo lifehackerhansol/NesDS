@@ -84,7 +84,7 @@ NSF_Run:
 	mov r0, #0
 	ldr r1, =__nsfInit
 	str r0, [r1]
-	ldr_ pc,scanlineHook
+	b handleScanlineHook
 
 noInit:
 	ldr_ r0,cyclesPerScanline
@@ -93,14 +93,14 @@ noInit:
 	ldr_ r1,m6502LastBank
 	sub m6502pc,m6502pc,r1
 	cmp m6502pc, #0x4700
-	ldrne_ pc,scanlineHook
+	bne handleScanlineHook
 
 	ldr m6502pc, =0x4720
 	encodePC
 	ldr r0,=NES_RAM+0x100
 	str_ r0, m6502RegSP
 	mov m6502a, #0
-	ldr_ pc,scanlineHook
+	b handleScanlineHook
 
 noPlay:
 	ldr_ r0,cyclesPerScanline
@@ -110,7 +110,7 @@ noPlay:
 	encodePC
 	ldr r0,=NES_RAM+0x100
 	str_ r0, m6502RegSP
-	ldr_ pc,scanlineHook
+	b handleScanlineHook
 
 nsfOut:
 	adr_ r2,m6502Regs
@@ -138,7 +138,7 @@ line0:
 	add cycles,cycles,r0
 	adr r0,line1_to_119
 	str_ r0,m6502NextTimeout
-	ldr_ pc,scanlineHook
+	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line1_to_119:
 	ldr_ r0,cyclesPerScanline
@@ -151,7 +151,7 @@ line1_to_119:
 	beq line119
 
 	bl ppusync
-	ldr_ pc,scanlineHook
+	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line119:
 	bl ppusync
@@ -161,7 +161,7 @@ line119:
 
 	adr addy,line120_to_240
 	str_ addy,m6502NextTimeout
-	ldr_ pc,scanlineHook
+	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line120_to_240:
 	ldr_ r0,cyclesPerScanline
@@ -175,8 +175,7 @@ line120_to_240:
 	adreq addy,line241
 	streq_ addy,m6502NextTimeout
 	blne ppusync
-
-	ldr_ pc,scanlineHook
+	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line241:
 NMIDELAY = CYCLE*21
@@ -191,7 +190,8 @@ NMIDELAY = CYCLE*21
 
 	adr addy,line241NMI
 	str_ addy,m6502NextTimeout
-	b defaultScanlineHook
+//	b defaultScanlineHook
+	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line241NMI:
 	ldr_ r0,frame
@@ -244,7 +244,7 @@ EMU_Run:
 	tst r1, #NSFFILE
 	bne NSF_Run
 
-	ldr_ pc,scanlineHook
+	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line242_to_end:
 	ldr_ r0,cyclesPerScanline
@@ -255,11 +255,11 @@ line242_to_end:
 	add r1,r1,#1
 	str_ r1,scanline
 	cmp r1,r2
-	ldrne_ pc,scanlineHook
+	bne handleScanlineHook
 
 	adr addy,line0
 	str_ addy,m6502NextTimeout
-	ldr_ pc,scanlineHook
+	b handleScanlineHook
 @---------------------------------------------------------------------------------
 pcm_scanlineHook:
 @---------------------------------------------------------------------------------
@@ -289,6 +289,10 @@ hk0:
 defaultScanlineHook:
 	b m6502Go
 
+handleScanlineHook:
+	ldr_ lr,m6502NextTimeout
+	stmfd sp!,{lr}
+	ldr_ pc,scanlineHook
 @---------------------------------------------------------------------------------
 CheckI:					@ Check Interrupt Disable
 @---------------------------------------------------------------------------------

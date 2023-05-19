@@ -57,7 +57,7 @@ N = 0x80
 	subs cycles,cycles,#\count*3*CYCLE
 	ldrplb r0,[m6502pc],#1
 	ldrpl pc,[m6502ptr,r0,lsl#2]
-	ldr_ pc,m6502NextTimeout
+	b returnToCaller
 .endm
 
 .macro fetch_c count	@same as fetch except it adds the Carry (bit 0) also.
@@ -65,7 +65,7 @@ N = 0x80
 	sbcs cycles,cycles,#\count*3*CYCLE
 	ldrplb r0,[m6502pc],#1
 	ldrpl pc,[m6502ptr,r0,lsl#2]
-	ldr_ pc,m6502NextTimeout
+	b returnToCaller
 .endm
 
 .macro clearcycles
