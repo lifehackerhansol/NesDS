@@ -1,6 +1,5 @@
 @---------------------------------------------------------------------------------
 	#include "equates.h"
-	#include "M6502mac.h"
 @---------------------------------------------------------------------------------
 	.global mapper0init
 	.global mapper2init
@@ -78,7 +77,7 @@ m71irqhook:
 	str r0, irq_pend
 	b CheckI
 hk0:
-	fetch 0
+	b m6502Go
 m71iow:
 	and r2, addy, #0xff
 	cmp r2, #0x15

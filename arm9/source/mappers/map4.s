@@ -1,6 +1,5 @@
 @---------------------------------------------------------------------------------
 	#include "equates.h"
-	#include "M6502mac.h"
 #define	MMC3_IRQ_KLAX		1
 #define	MMC3_IRQ_SHOUGIMEIKAN	2
 #define	MMC3_IRQ_DAI2JISUPER	3
@@ -439,4 +438,4 @@ skip2:
 	strneb_ r2, irq_request
 	bne CheckI
 hq:
-	fetch 0
+	b m6502Go

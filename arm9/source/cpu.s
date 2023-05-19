@@ -127,7 +127,7 @@ line0:
 	str_ r0,scanline			@ reset scanline count
 
 	bl newframe					@ display update
-	
+
 	mov r0,#0
 	bl ppusync
 
@@ -149,13 +149,13 @@ line1_to_119:
 	str_ r0,scanline
 	cmp r0,#119
 	beq line119
-	
+
 	bl ppusync
 	ldr_ pc,scanlineHook
 @---------------------------------------------------------------------------------
 line119:
 	bl ppusync
-	
+
 	ldrb_ r0,ppuCtrl0
 	strb_ r0,ppuCtrl0Frame		@ Contra likes this
 
@@ -287,7 +287,7 @@ pcm_scanlineHook:
 	bne CheckI
 hk0:
 defaultScanlineHook:
-	fetch 0
+	b m6502Go
 
 @---------------------------------------------------------------------------------
 CheckI:					@ Check Interrupt Disable
@@ -295,7 +295,7 @@ CheckI:					@ Check Interrupt Disable
 	tst cycles,#CYC_I
 	ldreq r12,=0xFFFE
 	beq irq6502				@ Take irq
-	fetch 0
+	b m6502Go
 @---------------------------------------------------------------------------------
 ntsc_pal_reset:
 @---------------------------------------------------------------------------------
