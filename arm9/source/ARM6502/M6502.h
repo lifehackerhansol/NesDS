@@ -7,9 +7,9 @@ extern "C" {
 
 typedef struct {
 	void *opz[256];
+	u32 *memTbl[8];
 	void *readTbl[8];
 	void *writeTbl[8];
-	u32 *memTbl[8];
 
 	u32 regNz;
 	u32 regA;

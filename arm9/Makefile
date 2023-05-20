@@ -30,7 +30,7 @@ CFLAGS	:=	-Wall -O2 -DNO_VIZ\
 			-ffast-math \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM9 -DCPU_RP2A03 #-DROM_EMBEDED
+CFLAGS	+=	$(INCLUDE) -DARM9 -DNDS -DCPU_RP2A03 #-DROM_EMBEDED
 CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	$(ARCH) $(CFLAGS)

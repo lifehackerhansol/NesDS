@@ -346,7 +346,7 @@ CPU_reset:	@ Called by loadcart (r0-r9 are free to use)
 @---------------------------------------------------------------------------------
 	stmfd sp!,{lr}
 
-	ldr r0,=globals
+	ldr r0,=m6502Base
 	bl m6502Init
 
 @---NTSC/PAL
