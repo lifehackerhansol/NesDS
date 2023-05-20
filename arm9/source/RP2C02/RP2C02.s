@@ -420,6 +420,9 @@ EMU_VBlank:	@call every vblank
 	stmfd sp!,{r4-r7,globalptr,lr}
 	ldr globalptr,=globals
 
+	mov r0,#0
+	strb_ r0,ppuBusLatch
+
 	ldrb_ r1,cartFlags		@set cartFlags(upper 4-bits (<<8, ignored) + 0000(should be zero)(<<4) + vTsM)
 	DEBUGINFO CARTFLAG, r1
 
@@ -714,7 +717,7 @@ PPU_read_tbl:
 	.word empty_PPU_R	@$2001
 	.word stat_R		@$2002
 	.word empty_PPU_R	@$2003
-	.word empty_PPU_R	@$2004
+	.word ppuOamDataR	@$2004
 	.word empty_PPU_R	@$2005
 	.word empty_PPU_R	@$2006
 	.word vmdata_R		@$2007
@@ -824,11 +827,24 @@ stat_R:		@(2002)
 	tst r1, #0x10
 	biceq r0, #0x60
 
+	ldrb_ r1,ppuBusLatch
+	and r1,r1,#0x1F
+	orr r0,r0,r1
+
 	bx lr
 @---------------------------------------------------------------------------------
 oamAddr_W:		@(2003)
 @---------------------------------------------------------------------------------
 	strb_ r0,ppuOamAdr
+	bx lr
+@---------------------------------------------------------------------------------
+ppuOamDataR:	@(2004)
+@---------------------------------------------------------------------------------
+	ldrb_ r1,ppuOamAdr
+	ldr r2,=NES_SPRAM
+	ldrb r0,[r2,r1]
+//	bic r0,r0,#0x1C			;@ Actualy only when reading attribute (2).
+	strb_ r0,ppuBusLatch
 	bx lr
 @---------------------------------------------------------------------------------
 ppuOamDataW:	@(2004)
@@ -942,11 +958,16 @@ vmdata_R:	@(2007)
 	ldrb r1,[r1,r0]
 	ldrb_ r0,readTemp
 	str_ r1,readTemp
+	strb_ r0,ppuBusLatch
 	bx lr
 palRead:
 	and r0,r0,#0x1f
 	adr r1,nes_palette
 	ldrb r0,[r1,r0]
+	ldrb_ r1,ppuBusLatch
+	and r1,r1,#0xC0
+	orr r0,r0,r1
+	strb_ r0,ppuBusLatch
 	bx lr
 @---------------------------------------------------------------------------------
 vmdata_W:	@ (2007)			@Do not change addy...
@@ -1061,13 +1082,12 @@ VRAM_pal:	@($3F00-$3F1F)
 	bmi VRAM_name3
 
 	and r0,r0,#0x3f		@(only colors 0-63 are valid)
-	orr r2, r0, #0xc0	@something wrong...
 	and addy,addy,#0x1f
 		tst addy,#0x03
 		biceq addy,#0x10	@$10,$14,$18,$1C mirror to $00,$04,$08,$0C
 	adr r1,nes_palette
-	strb r2,[r1,addy]!	@store in nes palette
-	streqb r2, [r1, #16]
+	strb r0,[r1,addy]!	@store in nes palette
+	streqb r0, [r1, #16]
 
 	add r0,r0,r0
 	ldr r1,=MAPPED_RGB
