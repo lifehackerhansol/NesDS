@@ -257,4 +257,4 @@ hsync:
 	strb_ r0, irq_counter
 	b CheckI
 hq:
-	b m6502Go
+	bx lr

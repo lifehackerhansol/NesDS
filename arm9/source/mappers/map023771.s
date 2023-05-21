@@ -77,7 +77,7 @@ m71irqhook:
 	str r0, irq_pend
 	b CheckI
 hk0:
-	b m6502Go
+	bx lr
 m71iow:
 	and r2, addy, #0xff
 	cmp r2, #0x15

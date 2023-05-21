@@ -190,7 +190,7 @@ hook:
 	b CheckI
 
 hk0:
-	b m6502Go
+	bx lr
 
 @------------------------
 frameHook:

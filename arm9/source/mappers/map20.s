@@ -592,7 +592,7 @@ checktr:
 	ands r0, r0, r0
 	bne CheckI
 hk:
-	b m6502Go
+	bx lr
 
 
 @-------------

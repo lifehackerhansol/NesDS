@@ -438,4 +438,4 @@ skip2:
 	strneb_ r2, irq_request
 	bne CheckI
 hq:
-	b m6502Go
+	bx lr

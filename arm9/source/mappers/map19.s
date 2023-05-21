@@ -140,4 +140,4 @@ hook:
 @	b irq6502
 	b CheckI
 h1:
-	b m6502Go
+	bx lr

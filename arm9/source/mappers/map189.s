@@ -265,7 +265,7 @@ hsync:
 	strb_ r0, irq_counter
 	b CheckI
 hk:
-	b m6502Go
+	bx lr
 
 @------------------------------------
 write0:

@@ -125,6 +125,7 @@ line0:
 	mov r0,#0
 	strb_ r0,ppuStat			@ vbl clear, sprite0 clear
 	str_ r0,scanline			@ reset scanline count
+//	bl m6502SetNMIPin			@ Clear NMI Pin
 
 	bl newframe					@ display update
 
@@ -190,7 +191,6 @@ NMIDELAY = 21*CYCLE
 
 	adr addy,line241NMI
 	str addy,returnAddress
-//	b defaultScanlineHook
 	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line241NMI:
@@ -266,23 +266,8 @@ returnAddress:
 ;@----------------------------------------------------------
 //m6502NMI:
 ;@----------------------------------------------------------
-	ldr r12,=0xFFFA
-	loadLastBank r0
-	sub r0,m6502pc,r0
-	push16						;@ Save PC
-
-	encodeP (R)					;@ Save P
-	push8 r0
-
-	orr cycles,cycles,#CYC_I	;@ Disable IRQ
-#if !defined(CPU_RP2A03)
-	bic cycles,cycles,#CYC_D	;@ and decimal mode?
-#endif
-	ldr r0,[m6502ptr,#m6502MemTbl+7*4]
-	ldrh m6502pc,[r0,r12]
-	encodePC					;@ Get IRQ vector
-
-	bx lr
+//	mov r0,#1
+//	b m6502SetNMIPin
 
 @---------------------------------------------------------------------------------
 pcm_scanlineHook:
@@ -310,12 +295,12 @@ pcm_scanlineHook:
 	str r2,[addy]
 	bne CheckI
 hk0:
-defaultScanlineHook:
-	b m6502Go
+	bx lr
 
 handleScanlineHook:
 	ldr lr,returnAddress
 	stmfd sp!,{lr}
+	ldr lr,=m6502CheckIrqs
 	ldr_ pc,scanlineHook
 @---------------------------------------------------------------------------------
 CheckI:					@ Check Interrupt Disable
@@ -323,7 +308,7 @@ CheckI:					@ Check Interrupt Disable
 	tst cycles,#CYC_I
 	ldreq r12,=0xFFFE
 	beq irq6502				@ Take irq
-	b m6502Go
+	b m6502CheckIrqs
 @---------------------------------------------------------------------------------
 ntsc_pal_reset:
 @---------------------------------------------------------------------------------

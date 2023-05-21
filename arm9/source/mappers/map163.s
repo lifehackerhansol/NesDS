@@ -174,4 +174,4 @@ hook:
 	bl chr4567_
 
 hk:
-	b m6502Go
+	bx lr

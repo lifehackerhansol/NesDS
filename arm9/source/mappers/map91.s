@@ -68,4 +68,4 @@ hsync:
 	ands r0, r0, #7
 	beq CheckI
 hk:
-	b m6502Go
+	bx lr
