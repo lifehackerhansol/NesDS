@@ -125,7 +125,7 @@ line0:
 	mov r0,#0
 	strb_ r0,ppuStat			@ vbl clear, sprite0 clear
 	str_ r0,scanline			@ reset scanline count
-//	bl m6502SetNMIPin			@ Clear NMI Pin
+	bl m6502SetNMIPin			@ Clear NMI Pin
 
 	bl newframe					@ display update
 
@@ -179,7 +179,7 @@ line120_to_240:
 	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line241:
-NMIDELAY = 21*CYCLE
+NMIDELAY = 7*CYCLE
 
 
 	add cycles,cycles,#NMIDELAY	@ NMI is delayed a few cycles..
@@ -201,9 +201,8 @@ line241NMI:
 	ldrb_ r0,ppuCtrl0
 	tst r0,#0x80
 	beq 0f			@ NMI?
-
-	bl m6502NMI
-	sub cycles,cycles,#7*3*CYCLE
+	mov r0,#1
+	bl m6502SetNMIPin
 0:
 	sub cycles,cycles,#NMIDELAY
 
@@ -263,12 +262,6 @@ line242_to_end:
 
 returnAddress:
 	.long 0
-;@----------------------------------------------------------
-//m6502NMI:
-;@----------------------------------------------------------
-//	mov r0,#1
-//	b m6502SetNMIPin
-
 @---------------------------------------------------------------------------------
 pcm_scanlineHook:
 @---------------------------------------------------------------------------------
@@ -298,6 +291,11 @@ hk0:
 	bx lr
 
 handleScanlineHook:
+//	adr lr,slhRet
+//	ldr_ pc,scanlineHook
+//slhRet:
+//	ldr lr,returnAddress
+//	b m6502Run
 	ldr lr,returnAddress
 	stmfd sp!,{lr}
 	ldr lr,=m6502CheckIrqs
@@ -308,7 +306,7 @@ CheckI:					@ Check Interrupt Disable
 	tst cycles,#CYC_I
 	ldreq r12,=0xFFFE
 	beq irq6502				@ Take irq
-	b m6502CheckIrqs
+	bx lr
 @---------------------------------------------------------------------------------
 ntsc_pal_reset:
 @---------------------------------------------------------------------------------
@@ -319,9 +317,9 @@ ntsc_pal_reset:
 	ldr_ r1,emuFlags
 	tst r1,#PALTIMING
 
-	ldreq r1,=341*CYCLE		@NTSC		(113+2/3)*3
-	ldrne r1,=320*CYCLE		@PAL		(106+9/16)*3
-//	mov r1,#113*CYCLE
+//	ldreq r1,=341*CYCLE		@NTSC		(113+2/3)*3
+//	ldrne r1,=320*CYCLE		@PAL		(106+9/16)*3
+	mov r1,#113*CYCLE
 	str_ r1,cyclesPerScanline
 	mov globalptr, r2
 

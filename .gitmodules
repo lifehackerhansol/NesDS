@@ -1,0 +1,3 @@
+[submodule "arm9/source/ARM6502"]
+	path = arm9/source/ARM6502
+	url = https://github.com/FluBBaOfWard/ARM6502.git

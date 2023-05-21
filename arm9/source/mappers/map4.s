@@ -317,7 +317,7 @@ write3:
 	mov r0, #0
 	strb_ r0, irq_enable
 	strb_ r0, irq_request
-	bx lr
+	b m6502SetIRQPin
 
 we001:
 	strb_ r0, reg7
@@ -325,7 +325,7 @@ we001:
 	strb_ r0, irq_enable
 	mov r0, #0
 	strb_ r0, irq_request
-	bx lr
+	b m6502SetIRQPin
 
 @-------------------------------------------------------------------
 hsync:
@@ -360,10 +360,7 @@ hsync:
 	strb_ r2, irq_counter
 0:
 	ldrb_ r0, irq_request
-	ands r0, r0, r0
-	beq hq
-
-	b CheckI
+	b m6502SetIRQPin
 @--------
 skip1:
 	cmp r2, #MMC3_IRQ_ROCKMAN3
@@ -372,7 +369,7 @@ skip1:
 	bcs 0f
 	tst r1, #0x18
 	beq 0f
-	
+
 	ldrb_ r0, irq_enable
 	ands r0, r0, r0
 	beq 0f
@@ -381,23 +378,21 @@ skip1:
 	subs r2, r2, #1
 	strb_ r2, irq_counter
 	bne 0f
-	
+
 	mov r0, #0xff
 	strb_ r0, irq_request
 	ldrb_ r0, irq_latch
 	strb_ r0, irq_counter
-	
+
 0:
 	ldrb_ r0, irq_request
-	ands r0, r0, r0
-	beq hq
-	b CheckI
+	b m6502SetIRQPin
 @--------
 skip2:
 	cmp r0, #240
-	bcs hq
+	bxcs lr
 	tst r1, #0x18
-	beq hq
+	bxeq lr
 	
 	mov r2, #0
 	ldrb_ r1, irq_preset_vbl
@@ -428,14 +423,13 @@ skip2:
 1:
 	strb_ r1, irq_counter
 	ands r1, r1, r1
-	bne hq
+	bxne lr
 	
 	mov r2, #0xFF
 	strb_ r2, irq_preset
 	
 	ldrb_ r1, irq_enable
-	ands r1, r1, r1
-	strneb_ r2, irq_request
-	bne CheckI
-hq:
-	bx lr
+	ands r0, r1, r1
+	movne r0,r2
+	strneb_ r0, irq_request
+	b m6502SetIRQPin

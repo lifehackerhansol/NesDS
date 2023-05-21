@@ -325,7 +325,9 @@ mmc5_200:
 setEnIrq:
 	and r0,r0,#0x80
 	strb_ r0,enable
-	bx lr
+	ldrb_ r1,mmc5irqr
+	and r0,r0,r1
+	b m6502SetIRQPin
 @---------------------------------------------------------------------------------
 mmc5_c00w:
 	@dup write, no need
@@ -361,10 +363,12 @@ mmc5_r:		@5204,5205,5206
 	bx lr
 
 MMC5IRQR:
+	stmfd sp!,{lr}
+	mov r0,#0
+	bl m6502SetIRQPin
+	ldmfd sp!,{lr}
 	ldrb_ r0,mmc5irqr
-	ldrb_ r1,enable
-	cmp r1,#0
-	andne r1,r0,#0x40
+	and r1,r0,#0x40
 	strb_ r1,mmc5irqr
 	bx lr
 
@@ -384,27 +388,27 @@ MMC5MulB:
 @---------------------------------------------------------------------------------
 hook:
 @---------------------------------------------------------------------------------
-	ldrb_ r0,counter
+	ldrb_ r2,counter
 	ldr_ r1,scanline
-	ldrb_ r2,mmc5irqr
-	cmp r1,#239
-	blt h2
-	orr r2,r2,#0x40
-h2:
-	cmp r1,#245
-	bge h1
+	ldrb_ r0,mmc5irqr
+	cmp r1,#0
+	orreq r0,#0x40
+//	beq h1
 
-	cmp r1,r0
-	ble h1
+	cmp r1,#240
+	biceq r0,r0,#0xC0
+	beq h1
 
-	orr r2,r2,#0x80
-	strb_ r2,mmc5irqr
+	cmp r1,r2
+	orreq r0,r0,#0x80
+	strb_ r0,mmc5irqr
 
-	ldrb_ r0,enable
-	cmp r0,#0
-@	bne irq6502
-	bne CheckI
-h1:
-	strb_ r2,mmc5irqr
+	ldrb_ r2,enable
+	ands r0,r0,r2
+	bne m6502SetIRQPin
 	bx lr
+h1:
+	strb_ r0,mmc5irqr
+	and r0,r0,#80
+	b m6502SetIRQPin
 @---------------------------------------------------------------------------------

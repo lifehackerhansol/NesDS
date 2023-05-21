@@ -544,9 +544,7 @@ map89AB_:
 flush:		@update m6502pc & m6502LastBank
 	ldr_ r1,m6502LastBank
 	sub m6502pc,m6502pc,r1
-	encodePC
-	bx lr
-//	b translate6502PCToOffset	;@ In=m6502pc, Out=m6502pc,r0=lastBank
+	b translate6502PCToOffset	;@ In=m6502pc, Out=m6502pc,r0=lastBank
 @---------------------------------------------------------------------------------
 mapCDEF_:
 @---------------------------------------------------------------------------------
