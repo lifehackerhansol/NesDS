@@ -47,6 +47,7 @@ mappertbl:
 	.word 33,mapper33init
 	.word 34,mapper34init
 	.word 40,mapper40init
+	.word 48,mapper48init
 	.word 64,mapper64init
 	.word 65,mapper65init
 	.word 66,mapper66init

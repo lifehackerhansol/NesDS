@@ -47,29 +47,30 @@ _ff:
 	tst r0,#0x10
 	b mirror2V_
 _1:
-	and r0,r0,#1
+	mov r0,#0
 	strb_ r0,enable
-	bx lr
+	b m6502SetIRQPin
 _2:
 	strb_ r0,counter+2
-	bx lr
+	mov r0,#0
+	b m6502SetIRQPin
 _3:
 	strb_ r0,counter+3
 	mov r1,#1
 	strb_ r1,enable
-	bx lr
+	mov r0,#0
+	b m6502SetIRQPin
 @---------------------------------------------------------------------------------
 hook:
 @---------------------------------------------------------------------------------
 	ldrb_ r0,enable
 	cmp r0,#0
-	beq h1
+	bxeq lr
 
 	ldr_ r0,counter
 	adds r0,r0,#0x10000
 	str_ r0,counter
-@	bcs irq6502
-	bcs CheckI
-h1:
-	bx lr
+	bxcc lr
+	mov r0,#1
+	b m6502SetIRQPin
 @---------------------------------------------------------------------------------

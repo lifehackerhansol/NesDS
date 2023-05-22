@@ -67,17 +67,16 @@ map71w:
 m71irqhook:
 	ldr_ r0, scanline
 	cmp r0, #179
-	bne hk0
+	bxne lr
 
 	ldr r0, irq_pend
 	ands r0, r0, r0
-	beq hk0
+	bxeq lr
 
 	mov r0, #0
 	str r0, irq_pend
 	b CheckI
-hk0:
-	bx lr
+
 m71iow:
 	and r2, addy, #0xff
 	cmp r2, #0x15

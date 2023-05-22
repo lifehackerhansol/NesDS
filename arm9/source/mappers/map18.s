@@ -98,21 +98,19 @@ hook:
 @---------------------------------------------------------------------------------
 	ldrb_ r0,irqen
 	cmp r0,#0	@timer active?
-	beq h1
+	bxeq lr
 
 	ldr_ r0,counter
 	cmp r0,#0	@timer active?
-	beq h1
+	bxeq lr
 	subs r0,r0,#113		@counter-A
 	bhi h0
 
 	mov r0,#0
 	str_ r0,counter	@clear counter and IRQenable.
 	strb_ r0,irqen
-@	b irq6502
 	b CheckI
 h0:
 	str_ r0,counter
-h1:
 	bx lr
 @---------------------------------------------------------------------------------

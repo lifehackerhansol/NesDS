@@ -73,5 +73,5 @@ writeE000:
 	ldrb_ r2,latch
 	ldr pc,[r1,addy,lsl#2]
 
-writeFtbl: .word KoLatchLo,KoLatchHi,KoCounter,KoIRQen
+writeFtbl: .word KoLatchLo,KoLatchHi,KoIRQEnable,KoIRQack
 @---------------------------------------------------------------------------------

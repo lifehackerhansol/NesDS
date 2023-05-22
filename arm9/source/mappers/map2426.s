@@ -66,5 +66,5 @@ writeE000:
 	adrne r1,writeTable-8*4
 	ldr pc,[r1,r2,lsl#2]
 
-writeTable: .word KoLatch,KoCounter,KoIRQen,void
+writeTable: .word KoLatch,KoIRQEnable,KoIRQack,void
 @---------------------------------------------------------------------------------

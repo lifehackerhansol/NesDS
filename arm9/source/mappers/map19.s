@@ -29,22 +29,24 @@ mapper19init:
 
 @---------------------------------------------------------------------------------
 write0:
-	cmp addy,#0x5000
+	cmp addy,#0x4800
 	blo IO_W
 	and r1,addy,#0x7800
 	cmp r1,#0x5000
 	streqb_ r0,counter+2
-	bxeq lr
+	moveq r0,#0
+	beq m6502SetIRQPin
 
 	cmp r1,#0x5800
 	bxne lr
 	strb_ r0,counter+3
 	and r0,r0,#0x80
 	strb_ r0,enable
-	bx lr
+	mov r0,#0
+	b m6502SetIRQPin
 @---------------------------------------------------------------------------------
 map19_r:
-	cmp addy,#0x5000
+	cmp addy,#0x4800
 	blo IO_R
 	mov r0, #0
 
@@ -126,18 +128,16 @@ hook:
 
 	ldrb_ r0,enable
 	cmp r0,#0
-	beq h1
+	bxeq lr
 
 	ldr_ r0,counter
 @	adds r0,r0,#0x71aaab		@113.66667
 	adds r0,r0,#0x720000
 	str_ r0,counter
-	bcc h1
+	bxcc lr
+
 	mov r0,#0
 	strb_ r0,enable
 	sub r0,r0,#0x10000
 	str_ r0,counter
-@	b irq6502
-	b CheckI
-h1:
-	bx lr
+	b m6502SetIRQPin

@@ -8,7 +8,7 @@
 mapper0init:
 @---------------------------------------------------------------------------------
 	.word void, void, void, void
-	
+
 	ldr_ r0, romMask
 	add r0, r0, #1
 	mov r0, r0, lsr#14
@@ -24,4 +24,3 @@ m16k:
 m32k:
 	mov r0, #0
 	b map89ABCDEF_
-	
