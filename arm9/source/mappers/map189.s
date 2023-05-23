@@ -31,6 +31,11 @@
 @---------------------------------------------------------------------------------
 .section .text,"ax"
 @---------------------------------------------------------------------------------
+@ This mapper is a modified MMC3.
+@ Everything operates just as it does on the MMC3, only the normal PRG regs
+@ (R:6,R:7) are ignored, and a new PRG Reg is used instead.
+@ Example games:
+@ Thunder Warrior
 mapper189init:
 @---------------------------------------------------------------------------------
 	.word write0, write1, write2, write3
@@ -38,10 +43,10 @@ mapper189init:
 	mov r0, #0
 	str_ r0, reg0
 	str_ r0, reg4
-	
+
 	mov r0, #-1
 	bl map89ABCDEF_
-	
+
 	mov r0, #0
 	strb_ r0, chr01
 	mov r0, #2
@@ -54,13 +59,13 @@ mapper189init:
 	strb_ r0, chr6
 	mov r0, #7
 	strb_ r0, chr7
-	
+
 	bl setbank_ppu
-	
+
 	mov r0, #0
 	str_ r0, irq_enable
 	strb_ r0, patch
-	
+
 	adr r0, hsync
 	str_ r0,scanlineHook
 
@@ -81,7 +86,7 @@ writel:
 	bcc IO_W
 
 	strb_ r0, datar0
-	
+
 	stmfd sp!, {lr}
 	mov r1, addy, lsr#8
 	cmp r1, #0x41
@@ -96,7 +101,7 @@ writel:
 	bne chpatch
 	and r0, r0, #0x3
 	bl map89ABCDEF_
-	
+
 chpatch:
 
 	ldrb_ r0, patch
@@ -184,7 +189,7 @@ setbank_ppu:
 	ldrb_ r0, reg0
 	tst r0, #0x80
 	beq 0f
-	
+
 	mov r1, #4
 	ldrb_ r0, chr01
 	bl chr1k
@@ -212,7 +217,7 @@ setbank_ppu:
 	ldrb_ r0, chr7
 	bl chr1k
 	ldmfd sp!, {pc}
-	
+
 0:
 	mov r1, #0
 	ldrb_ r0, chr01
@@ -247,25 +252,24 @@ hsync:
 @-------------------------------------------------------------------
 	ldr_ r0, scanline
 	cmp r0, #240
-	bcs hk
-	
+	bxcs lr
+
 	ldrb_ r1, ppuCtrl1
 	tst r1, #0x18
-	beq hk
-	
+	bxeq lr
+
 	ldrb_ r1, irq_enable
 	ands r1, r1, r1
-	beq hk
-	
+	bxeq lr
+
 	ldrb_ r1, irq_counter
 	subs r1, r1, #1
 	strb_ r1, irq_counter
-	bne hk
+	bxne lr
 	ldrb_ r0, irq_latch
 	strb_ r0, irq_counter
-	b CheckI
-hk:
-	bx lr
+	mov r0,#1
+	b m6502SetIRQPin
 
 @------------------------------------
 write0:
@@ -309,8 +313,9 @@ wc001:
 @------------------------------------
 write3:
 @------------------------------------
-	and r0, addy, #1
+	ands r0, addy, #1
 	strb_ r0, irq_enable
+	beq m6502SetIRQPin
 	bx lr
 @------------------------------------
 a5000xordat:

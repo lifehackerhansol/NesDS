@@ -141,10 +141,10 @@ hook:
 @---------------------------------------------------------------------------------
 	ldrb_ r0, reg1
 	tst r0, #0x80
-	beq hk
+	bxeq lr
 	ldrb_ r0, ppuCtrl1
 	tst r0, #0x18
-	beq hk
+	bxeq lr
 
 	ldr_ r0, scanline
 	cmp r0, #127
@@ -152,26 +152,24 @@ hook:
 	mov r0, #1
 	bl chr0123_
 	mov r0, #1
-	bl chr4567_
-	b hk
+	b chr4567_
+
 0:
 	bhi 1f
 	ldrb_ r0, rom_type
 	eors r0, r0, #1
-	bne hk
-	mov r0, #0
+	bxne lr
+	@ r0 = 0
+	stmfd sp!, {r0,lr}
 	bl chr0123_
-	mov r0, #0
-	bl chr4567_
-	b hk
+	ldmfd sp!, {r0,lr}
+	b chr4567_
 
 1:
-	cmp r0, #239
-	bne hk
-	mov r0, #0
+	subs r0, r0, #239
+	bxne lr
+	@ r0 = 0
+	stmfd sp!, {r0,lr}
 	bl chr0123_
-	mov r0, #0
-	bl chr4567_
-
-hk:
-	bx lr
+	ldmfd sp!, {r0,lr}
+	b chr4567_

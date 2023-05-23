@@ -10,7 +10,12 @@
 @---------------------------------------------------------------------------------
 .section .text,"ax"
 @---------------------------------------------------------------------------------
-mapper18init:	@Jaleco SS8806..
+@ Jaleco SS8806
+@ Example games:
+@ The Lord of King
+@ Magic John
+@ Pizza Pop
+mapper18init:
 @---------------------------------------------------------------------------------
 	.word write8000,writeA000,writeC000,writeE000
 
@@ -81,11 +86,12 @@ wE3: @- - - - - - - - - - - - - - -
 	bx lr
 wF0: @- - - - - - - - - - - - - - -
 	str_ r2,counter
-	bx lr
+	mov r0,#0
+	b m6502SetIRQPin
 wF1: @- - - - - - - - - - - - - - -
-	and r0,r0,#1
 	strb_ r0,irqen
-	bx lr
+	mov r0,#0
+	b m6502SetIRQPin
 wF2: @- - - - - - - - - - - - - - -
 	movs r1,r0,lsr#2
 	tst r0,#1
@@ -97,7 +103,7 @@ writeFtbl: .word wE0,wE1,wE2,wE3,wF0,wF1,wF2,void
 hook:
 @---------------------------------------------------------------------------------
 	ldrb_ r0,irqen
-	cmp r0,#0	@timer active?
+	tst r0,#1	@timer active?
 	bxeq lr
 
 	ldr_ r0,counter
@@ -109,7 +115,8 @@ hook:
 	mov r0,#0
 	str_ r0,counter	@clear counter and IRQenable.
 	strb_ r0,irqen
-	b CheckI
+	mov r0,#1
+	b m6502SetIRQPin
 h0:
 	str_ r0,counter
 	bx lr

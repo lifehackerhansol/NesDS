@@ -29,6 +29,10 @@
 	irq_latch	= mapperData+18
 	
 @---------------------------------------------------------------------------------
+@ TKSROM & TLSROM boards with a MMC3
+@ Games:
+@ Armadillo
+@ Pro Sport Hockey
 mapper118init:
 @---------------------------------------------------------------------------------
 	.word write0, empty_W, write2, write3
@@ -226,7 +230,7 @@ write3:
 	strb_ r0, reg6
 	mov r0, #0
 	strb_ r0, irq_enable
-	bx lr
+	b m6502SetIRQPin
 
 we001:
 	strb_ r0, reg7
@@ -239,22 +243,21 @@ hsync:
 @-------------------------------------------------------------------
 	ldr_ r0, scanline
 	cmp r0, #240
-	bcs hq
+	bxcs lr
 	ldrb_ r1, ppuCtrl1
 	tst r1, #0x18
-	beq hq
+	bxeq lr
 	
 	ldrb_ r0, irq_enable
 	ands r0, r0, r0
-	beq hq
+	bxeq lr
 
 	ldrb_ r2, irq_counter
 	subs r2, r2, #1
 	strneb_ r2, irq_counter
-	bne hq
+	bxne lr
 	
 	ldrb_ r0, irq_latch
 	strb_ r0, irq_counter
-	b CheckI
-hq:
-	bx lr
+	mov r0,#1
+	b m6502SetIRQPin

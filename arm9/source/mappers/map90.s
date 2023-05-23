@@ -220,13 +220,17 @@ writeCD:
 	and r0, r0, r0
 @-----------------
 ctable:
-	.word void, void, wc002, wc003, void, wc005, wc006, void
+	.word wc000, void, wc002, wc003, void, wc005, wc006, void
 @-----------------
+wc000:
+	ands r0,r0,#1
+	strb_ r0, irq_enable
+	beq m6502SetIRQPin
+	bx lr
 wc002:
 	mov r0, #0
-	@strb_ r0, irq_enable					@this instruction does not work well...
-	strb_ r0, irq_occur
-	bx lr
+	strb_ r0, irq_enable				@this instruction does not work well...
+	b m6502SetIRQPin
 wc003:
 	mov r0, #0xFF
 	strb_ r0, irq_enable
@@ -447,9 +451,9 @@ hbhook:
 	ldr_ r0, scanline
 	ldrb_ r1, ppuCtrl1
 	cmp r0, #240
-	bcs hk0
+	bxcs lr
 	tst r1, #0x18
-	beq hk0
+	bxeq lr
 
 	ldrb_ r0, irq_counter
 	ldrb_ r1, irq_preset
@@ -462,11 +466,9 @@ hbhook:
 	subs r0, r0, #0x1
 	strcsb_ r0, irq_counter
 
-	bhi hk0
+	bxhi lr
 
 	ldrb_ r0, irq_enable
 	ands r0, r0, r0
-	bne CheckI
-
-hk0:
+	bne m6502SetIRQPin
 	bx lr

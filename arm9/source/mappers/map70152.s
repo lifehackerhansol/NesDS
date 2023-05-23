@@ -6,8 +6,19 @@
 @---------------------------------------------------------------------------------
 .section .text,"ax"
 @---------------------------------------------------------------------------------
-mapper70init:	@Saint Seiya ..
-mapper152init:	@Saint Seiya ..
+@ Bandai mapper 70, no mirroring
+@ Many of these games use the Family Trainer Mat as an input device.
+@ Family Trainer - Manhattan Police
+@ Family Trainer - Meiro Daisakusen
+@ Kamen Rider Club
+@ Space Shadow
+@
+@ Bandai mapper 152, mirroring
+@ Arkanoid 2 (J)
+@ Gegege no Kitarou 2
+@ Saint Seiya ..
+mapper70init:
+mapper152init:
 @---------------------------------------------------------------------------------
 	.word write152,write152,write152,write152
 

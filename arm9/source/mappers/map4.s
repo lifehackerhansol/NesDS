@@ -310,22 +310,13 @@ wc001:
 @------------------------------------
 write3:
 @------------------------------------
-	tst addy, #1
-	bne we001
+	ands r0, addy, #1
+	strb_ r0, irq_enable
 	
-	strb_ r0, reg6
-	mov r0, #0
-	strb_ r0, irq_enable
-	strb_ r0, irq_request
-	b m6502SetIRQPin
-
-we001:
-	strb_ r0, reg7
-	mov r0, #1
-	strb_ r0, irq_enable
 	mov r0, #0
 	strb_ r0, irq_request
-	b m6502SetIRQPin
+	beq m6502SetIRQPin
+	bx lr
 
 @-------------------------------------------------------------------
 hsync:

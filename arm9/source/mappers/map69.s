@@ -9,7 +9,13 @@
 @---------------------------------------------------------------------------------
 .section .text,"ax"
 @---------------------------------------------------------------------------------
-mapper69init:			@ Sunsoft FME-7, Batman ROTJ, Gimmick...
+@ Sunsoft FME-7, 5A and 5B, mapper 69
+@ Batman ROTJ
+@ Gimmick
+@ Hebereke
+@ Gremlins 2 (J)
+@ Barcode World
+mapper69init:
 @---------------------------------------------------------------------------------
 	.word write0,write1,void,void			@There is a music channel also
 
@@ -44,7 +50,8 @@ write1:		@$A000
 
 irqen69:
 	strb_ r0,irqen
-	bx lr
+	mov r0,#0
+	b m6502SetIRQPin
 irqA69:
 	strb_ r0,countdown
 	bx lr
@@ -65,25 +72,21 @@ mapJinx:
 @---------------------------------------------------------------------------------
 hook:
 @---------------------------------------------------------------------------------
-	ldrb_ r1,irqen
-	cmp r1,#0
-	beq hk0
+	ldrb_ r2,irqen
+	tst r2,#0x80			@ Timer enable?
+	bxeq lr
 
 	ldr_ r0,countdown
 	ldrb_ r1,video			@ Number of cycles per scanline.
 	subs r0,r0,r1
 	str_ r0,countdown
-	bhi hk0
+	bxpl lr
 
-	mov r1,#-1
-	mov r1,r1,lsr#16
-	str_ r1,countdown
+	mov r0,r0,lsr#16
+	str_ r0,countdown
 
-	mov r1,#0
-	strb_ r1,irqen
-@	b irq6502
-	b CheckI
-hk0:
+	ands r0,r2,#0x01			@ IRQ enable?
+	bne m6502SetIRQPin
 	bx lr
 @---------------------------------------------------------------------------------
 commandlist:	.word mapJinx,map89_,mapAB_,mapCD_,mirrorKonami_,irqen69,irqA69,irqB69

@@ -2,14 +2,23 @@
 	#include "equates.h"
 @---------------------------------------------------------------------------------
 	.global mapper64init
-	countdown = mapperData+0
-	latch = mapperData+1
-	irqen = mapperData+2
-	rmode = mapperData+3
+	latch = mapperData+0
+	irqen = mapperData+1
+	rmode = mapperData+2
+	countdown = mapperData+3
 	cmd = mapperData+4
 	bank0 = mapperData+5
+	reload = mapperData+6
 @---------------------------------------------------------------------------------
 .section .text,"ax"
+@---------------------------------------------------------------------------------
+@ Tengen RAMBO-1, mapper 64
+@ Example games:
+@ * Klax
+@ * Skull and Crossbones
+@ * Shinobi
+@ * Rolling Thunder
+@ * Hard Drivin (prototype)
 @---------------------------------------------------------------------------------
 mapper64init:
 @---------------------------------------------------------------------------------
@@ -69,42 +78,38 @@ write1:		@$A000-A001
 @---------------------------------------------------------------------------------
 write2:		@C000-C001
 @---------------------------------------------------------------------------------
-	tst addy,#1
+	ands addy,addy,#1
 	streqb_ r0,latch
+	strneb_ r0,rmode
 	movne r0,#0
 	strneb_ r0,countdown
 	bx lr
 @---------------------------------------------------------------------------------
 write3:		@E000-E001
 @---------------------------------------------------------------------------------
-	and r0,addy,#1
+	ands r0,addy,#1
 	strb_ r0,irqen
+	beq m6502SetIRQPin
 	bx lr
 @---------------------------------------------------------------------------------
 RAMBO_IRQ_Hook:
 @---------------------------------------------------------------------------------
 @	ldrb r0,ppuCtrl1
-@	tst r0,#0x18		2no sprite/BG enable?  0x18
-@	beq hk0			@bye..
+@	tst r0,#0x18	@no sprite/BG enable?  0x18
+@	bxeq lr			@bye..
 
 	ldr_ r0,scanline
 	cmp r0,#240		@not rendering?
-	bhi hk0			@bye..
+	bxhi lr			@bye..
 
-	ldrb_ r0,countdown
+	ldr_ r0,countdown
 	subs r0,r0,#1
 	ldrmib_ r0,latch
 	strb_ r0,countdown
-	bne hk0
+	bxne lr
 
-	ldrb_ r1,irqen
-	cmp r1,#0
-	beq hk0
-
-@	mov r1,#0
-@	strb r1,irqen
-@	b irq6502
-	b CheckI
-hk0:
+	ldrb_ r0,irqen
+	cmp r0,#0
+	bne m6502SetIRQPin
 	bx lr
 @---------------------------------------------------------------------------------

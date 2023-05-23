@@ -70,7 +70,6 @@ writeE000:
 	orr addy,addy,addy,lsr#2
 	and addy,addy,#3
 	adr r1,writeFtbl
-	ldrb_ r2,latch
 	ldr pc,[r1,addy,lsl#2]
 
 writeFtbl: .word KoLatchLo,KoLatchHi,KoIRQEnable,KoIRQack

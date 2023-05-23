@@ -30,6 +30,7 @@
 @---------------------------------------------------------------------------------
 .section .text,"ax"
 @---------------------------------------------------------------------------------
+@ Board with MMC1 plus timers
 mapper105init:
 @---------------------------------------------------------------------------------
 	.word write0,write1,void,write3
@@ -74,7 +75,7 @@ writelatch: @-----
 
 	cmp r2,#4
 	mov r1,#0
-	moveq pc,addy
+	bxeq addy
 
 	add r2,r2,#1
 	strb_ r2,latchbit
@@ -109,6 +110,12 @@ w1:	strb_ r1,latch
     @----
 	tst r0,#0x10
 	strne_ r1,counter	@#0
+
+	stmfd sp!, {r0,lr}
+	mov r0,#1
+	blne m6502SetIRQPin
+	ldmfd sp!, {r0,lr}
+
 	b romswitch
 @---------------------------------------------------------------------------------
 write3:		@($E000-$FFFF)
@@ -158,19 +165,15 @@ hook:
 
 	ldrb_ r1,reg1
 	tst r1,#0x10
-	bne hk0
+	bxne lr
 
 	ldr_ r0,counter
 	add r0,r0,#113			@ Cycles per scanline
 	str_ r0,counter
 	orr r0,r0,#dip<<25		@ DIP switch
 	cmp r0,#0x3e000000
-	blo hk0
+	bxlo lr
 
-@	mov r1,#0
-@	str r1,counter
-@	b irq6502
-	b CheckI
-hk0:
-	bx lr
+	mov r0,#1
+	b m6502SetIRQPin
 @---------------------------------------------------------------------------------

@@ -168,6 +168,10 @@ exread:
 exrtbl:
 	.word r30, r31, r32, r33
 r30:
+	stmfd sp!,{lr}
+	mov r0,#0
+	bl m6502SetIRQPin			;@ Clear IRQ pin on CPU
+	ldmfd sp!,{lr}
 	mov r0, #0x80
 	mov r1, #0
 	ldrb_ r2, irq_occur
@@ -315,15 +319,15 @@ w22:
 	strb_ r1, irq_occur
 	and r1, r0, #1
 	strb_ r1, irq_repeat
-	ands r1, r0, #2
-	streqb_ r1, irq_enable
+	ands r0, r0, #2
+	streqb_ r0, irq_enable
+	beq m6502SetIRQPin			;@ Clear IRQ pin on CPU
+	ldrb_ r0, disk_enable
+	ands r0, r0, r0
+	strb_ r0, irq_enable
 	bxeq lr
-	ldrb_ r1, disk_enable
-	ands r1, r1, r1
-	strb_ r1, irq_enable
-	bxeq lr
-	ldr_ r1, irq_latch
-	str_ r1, irq_counter
+	ldr_ r0, irq_latch
+	str_ r0, irq_counter
 	bx lr
 
 w23:
@@ -332,7 +336,7 @@ w23:
 	bxne lr
 	strb_ r0, irq_enable
 	strb_ r0, irq_occur
-	bx lr
+	b m6502SetIRQPin			;@ Clear IRQ pin on CPU
 
 w24:
 	ldrb_ r1, RW_mode
@@ -578,7 +582,8 @@ hsync:
 	ands r0, r0, r0
 	streqb_ r0, irq_enable
 
-	b CheckI
+	mov r0,#1
+	b m6502SetIRQPin			;@ Set IRQ pin on CPU
 
 0:
 	ldr_ r1, irq_counter
@@ -590,8 +595,7 @@ hsync:
 checktr:
 	ldrb_ r0, irq_transfer
 	ands r0, r0, r0
-	bne CheckI
-hk:
+	bne m6502SetIRQPin			;@ Set IRQ pin on CPU
 	bx lr
 
 

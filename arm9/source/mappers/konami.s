@@ -24,14 +24,16 @@ KoLatch: @- - - - - - - - - - - - - - -
 	strb_ r0,latch
 	bx lr
 KoLatchLo: @- - - - - - - - - - - - - - -
-	and r2,r2,#0xf0
+	ldrb_ r1,latch
+	and r1,r1,#0xf0
 	and r0,r0,#0x0f
-	orr r0,r0,r2
+	orr r0,r1,r0
 	strb_ r0,latch
 	bx lr
 KoLatchHi: @- - - - - - - - - - - - - - -
-	and r2,r2,#0x0f
-	orr r0,r2,r0,lsl#4
+	ldrb_ r1,latch
+	and r1,r1,#0x0f
+	orr r0,r1,r0,lsl#4
 	strb_ r0,latch
 	bx lr
 KoIRQEnable: @- - - - - - - - - - - - - - -

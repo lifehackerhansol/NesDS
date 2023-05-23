@@ -39,6 +39,11 @@
 
 	
 @---------------------------------------------------------------------------------
+@ iNES Mapper 74 denotes the 43-393/860908C PCB with MMC3 clone.
+@ Used by several games from Waixing:
+@ 機甲戰士 (Jījiǎ Zhànshì, Chinese translation of Data East's Metal Max)
+@ 甲A - China Soccer League for Division A
+@ 第四次: 机器人大战 - Robot War IV
 mapper74init:
 @---------------------------------------------------------------------------------
 	.word write0, write1, write2, write3
@@ -194,18 +199,18 @@ hsync:
 @-------------------------------------------------------------------
 	ldr_ r0, scanline
 	cmp r0, #240
-	bcs hk
+	bxcs lr
 	
 	ldrb_ r1, ppuCtrl1
 	tst r1, #0x18
-	beq hk
+	bxeq lr
 	
 	ldrb_ r1, irq_enable
 	ands r1, r1, r1
-	beq hk
+	bxeq lr
 	ldrb_ r1, irq_request
 	ands r1, r1, r1
-	bne hk
+	bxne lr
 	
 	ldrb_ r1, irq_counter
 	cmp r0, #0
@@ -216,14 +221,12 @@ hsync:
 cirq:
 	subs r1, r1, #1
 	strb_ r1, irq_counter
-	bcs hk
+	bxcs lr
 	mov r0, #0xff
 	strb_ r0, irq_request
 	ldrb_ r0, irq_latch
 	strb_ r0, irq_counter
-	b CheckI
-hk:
-	bx lr
+	b m6502SetIRQPin
 
 @------------------------------------
 write0:
@@ -287,15 +290,15 @@ write2:
 	strb_ r0, irq_counter
 	mov r0, #0
 	strb_ r0, irq_request
-	bx lr
+	b m6502SetIRQPin
 
 wc001:
 	strb_ r0, reg5
 	strb_ r0, irq_latch
 	mov r0, #0
 	strb_ r0, irq_request
-	bx lr
-	
+	b m6502SetIRQPin
+
 @------------------------------------
 write3:
 @------------------------------------
@@ -306,7 +309,7 @@ write3:
 	mov r0, #0
 	strb_ r0, irq_enable
 	strb_ r0, irq_request
-	bx lr
+	b m6502SetIRQPin
 
 we001:
 	strb_ r0, reg7
@@ -314,8 +317,7 @@ we001:
 	strb_ r0, irq_enable
 	mov r0, #0
 	strb_ r0, irq_request
-	bx lr
-	
+	b m6502SetIRQPin
 
 @------------------------------------
 frameHook:

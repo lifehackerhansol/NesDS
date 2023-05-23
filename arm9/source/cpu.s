@@ -8,7 +8,6 @@
 	.global EMU_Run
 	.global CPU_reset
 	.global pcm_scanlineHook
-	.global CheckI
 	.global ntsc_pal_reset
 
 pcmirqbakup = mapperData+24
@@ -268,26 +267,26 @@ pcm_scanlineHook:
 	@ldr addy,=pcmctrl
 	@ldr r2,[addy]
 	@tst r2,#0x1000			@Is PCM on?
-	@beq hk0
-	b hk0
+	@bxeq lr
+	bx lr
 
 	ldr_ r0,pcmirqcount
 @	ldr_ r1,cyclesPerScanline
 @	subs r0,r0,r1,lsr#4
 	subs r0,r0,#121			@Fire Hawk=122
 	str_ r0,pcmirqcount
-	bpl hk0
+	bxpl lr
 
 	tst r2,#0x40			@Is PCM loop on?
 	ldrne_ r0,pcmirqbakup
 	strne_ r0,pcmirqcount
-	bne hk0
+	bxne lr
 	tst r2,#0x80			@Is PCM IRQ on?
 	orrne r2,r2,#0x8000		@set pcm IRQ bit in R4015
 	bic r2,r2,#0x1000		@clear channel 5
 	str r2,[addy]
-	bne CheckI
-hk0:
+	bne m6502SetIRQPin
+
 	bx lr
 
 handleScanlineHook:
@@ -300,13 +299,6 @@ handleScanlineHook:
 	stmfd sp!,{lr}
 	ldr lr,=m6502CheckIrqs
 	ldr_ pc,scanlineHook
-@---------------------------------------------------------------------------------
-CheckI:					@ Check Interrupt Disable
-@---------------------------------------------------------------------------------
-	tst cycles,#CYC_I
-	ldreq r12,=0xFFFE
-	beq irq6502				@ Take irq
-	bx lr
 @---------------------------------------------------------------------------------
 ntsc_pal_reset:
 @---------------------------------------------------------------------------------

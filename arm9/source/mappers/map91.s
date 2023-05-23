@@ -2,6 +2,8 @@
 	#include "equates.h"
 @---------------------------------------------------------------------------------
 	.global mapper91init
+
+	irqEnable	= mapperData
 @---------------------------------------------------------------------------------
 .section .text,"ax"
 @---------------------------------------------------------------------------------
@@ -51,11 +53,14 @@ writel:
 addhi:
 	cmp addy, #0x8000
 	bxcs lr
-	and r2, addy, #3
-	cmp r2, #0
+	ands r2, addy, #3
 	beq map89_
-	cmp r2, #1
-	beq mapAB_
+	cmp r2, #2
+	bmi mapAB_
+	moveq r0,#0
+	movne r0,#1
+	strb_ r0,irqEnable
+	beq m6502SetIRQPin
 	bx lr
 
 
@@ -63,9 +68,9 @@ addhi:
 hsync:
 	ldr_ r0, scanline
 	cmp r0, #240
-	bcs hk
+	bxcs lr
 
 	ands r0, r0, #7
-	beq CheckI
-hk:
-	bx lr
+	bxne lr
+	mov r0,#1
+	b m6502SetIRQPin

@@ -9,7 +9,11 @@
 @---------------------------------------------------------------------------------
 .section .text,"ax"
 @---------------------------------------------------------------------------------
-mapper65init:	@Irem, Spartan X 2...
+@ Irem H3001,  mapper 65
+@ Daiku no Gen San 2
+@ Kaiketsu Yanchamaru 3
+@ Spartan X 2
+mapper65init:
 @---------------------------------------------------------------------------------
 	.word write8000,writeA000,writeC000,void
 
@@ -42,11 +46,13 @@ w91:
 w93:
 	and r0,r0,#0x80
 	strb_ r0,irqen
-	bx lr
+	mov r0,#0
+	b m6502SetIRQPin
 w94:
 	ldr_ r2,latch
 	str_ r2,counter
-	bx lr
+	mov r0,#0
+	b m6502SetIRQPin
 w95:
 	strb_ r0,latch+1
 	bx lr
@@ -75,7 +81,7 @@ hook:
 @---------------------------------------------------------------------------------
 	ldrb_ r0,irqen
 	cmp r0,#0	@timer active?
-	beq h1
+	bxeq lr
 
 	ldr_ r0,counter
 	subs r0,r0,#113		@counter-A
@@ -83,11 +89,10 @@ hook:
 
 	mov r0,#0
 	strb_ r0,irqen
-	str_ r0,counter	@clear counter and IRQenable.
-@	b irq6502
-	b CheckI
+	str_ r0,counter		@ clear counter and IRQenable.
+	mov r0,#1
+	b m6502SetIRQPin
 h0:
 	str_ r0,counter
-h1:
 	bx lr
 @---------------------------------------------------------------------------------

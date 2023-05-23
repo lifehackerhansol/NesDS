@@ -229,7 +229,8 @@ a1:
 	strb_ r1, irq_enable
 	ldr_ r1, irq_latch
 	str_ r1, irq_counter
-	bx lr
+	mov r0,#0
+	b m6502SetIRQPin
 
 b1:
 	strb_ r0, irq_latch
@@ -306,7 +307,8 @@ hook:
 	ldr r1, =0xFFFF
 	and r0, r0, r1
 	str_ r0, irq_counter
-	b CheckI
+	mov r0,#1
+	b m6502SetIRQPin
 @---------------------------------------------------------------------------------
 barcode_ptr:
 	.byte 0
