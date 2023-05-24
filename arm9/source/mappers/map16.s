@@ -8,7 +8,7 @@
 	patch		= mapperData	@may never used
 	eeprom_type	= mapperData + 1
 	irq_enable	= mapperData + 2
-	irq_type	= mapperData + 3
+	unused		= mapperData + 3
 	reg0		= mapperData + 4
 	reg1		= mapperData + 5
 	reg2		= mapperData + 6

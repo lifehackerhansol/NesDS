@@ -27,7 +27,7 @@
 	irq_latch	= mapperData+18
 	irq_request	= mapperData+19
 	we_sram		= mapperData+20
-	irq_type	= mapperData+21
+	unused		= mapperData+21
 	
 @---------------------------------------------------------------------------------
 .section .text,"ax"

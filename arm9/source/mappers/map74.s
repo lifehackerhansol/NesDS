@@ -35,7 +35,7 @@
 	irq_request	= mapperData+23
 	patch		= mapperData+24
 	we_sram		= mapperData+25
-	irq_type	= mapperData+26
+	unused		= mapperData+26
 
 	
 @---------------------------------------------------------------------------------
