@@ -135,7 +135,7 @@ writeEF:
 f0:
 	and r1, addy, #0xC
 	ldr pc, [pc, r1]
-	and r0, r0, r0		@a nop
+	nop
 	.word KoLatchLo, KoLatchHi, KoIRQEnable, KoIRQack
 
 @------------------------

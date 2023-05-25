@@ -69,8 +69,7 @@ writeE000:
 	orr addy,addy,addy,lsr#4		@0x55=1, 0xAA=2
 	orr addy,addy,addy,lsr#2
 	and addy,addy,#3
-	adr r1,writeFtbl
-	ldr pc,[r1,addy,lsl#2]
-
+	ldr pc,[pc,addy,lsl#2]
+	nop
 writeFtbl: .word KoLatchLo,KoLatchHi,KoIRQEnable,KoIRQack
 @---------------------------------------------------------------------------------

@@ -86,8 +86,7 @@ writeE000:
 	tst addy,#0x4A			@0x02 + 0x08 + 0x40
 	orrne addy,addy,#0x2
 	and addy,addy,#3
-	adr r1,writeFtbl
-	ldr pc,[r1,addy,lsl#2]
-
+	ldr pc,[pc,addy,lsl#2]
+	nop
 writeFtbl: .word KoLatchLo,KoIRQEnable,KoLatchHi,KoIRQack
 @---------------------------------------------------------------------------------

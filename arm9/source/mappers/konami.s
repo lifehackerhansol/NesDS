@@ -8,6 +8,7 @@
 	.global KoLatchHi
 	.global KoIRQEnable
 	.global KoIRQack
+
 latch = mapperData+0
 irqen = mapperData+1
 k4irq = mapperData+2
@@ -16,7 +17,7 @@ counter = mapperData+3
 .section .text,"ax"
 @---------------------------------------------------------------------------------
 Konami_Init:
-	ldr r0,=Konami_IRQ_Hook
+	adr r0,Konami_IRQ_Hook
 	str_ r0,scanlineHook
 	bx lr
 @---------------------------------------------------------------------------------

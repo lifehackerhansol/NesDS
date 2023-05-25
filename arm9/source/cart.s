@@ -47,6 +47,7 @@ mappertbl:
 	.word 33,mapper33init
 	.word 34,mapper34init
 	.word 40,mapper40init
+	.word 47,mapper47init
 	.word 48,mapper48init
 	.word 64,mapper64init
 	.word 65,mapper65init
@@ -126,7 +127,7 @@ initcart: @called from C:  r0=rom, (r1=emuFlags?)
 
 	mov r2,#1
 	ldrb r1,[r3,#-12]		@ r1 = 16K PRG-ROM page count
-	movne r0, #1			@ nsf has 16k?
+	movne r1, #1			@ nsf has 16k?
 	str_ r1,prgSize16k		@ some games' prg rom not == to (2**n), shit...
 	mov r0, r1, lsl#1
 	str_ r0,prgSize8k

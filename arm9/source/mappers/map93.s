@@ -5,7 +5,12 @@
 @---------------------------------------------------------------------------------
 .section .text,"ax"
 @---------------------------------------------------------------------------------
-mapper93init:	@Fantazy Zone (J)
+@ Sunsoft-2 IC on the Sunsoft-3R board.
+@ Used by:
+@ Fantazy Zone (J)
+@ Shanghai
+@ Also see mapper 89 & mapper 184
+mapper93init:
 @---------------------------------------------------------------------------------
 	.word write93,write93,write93,write93
 

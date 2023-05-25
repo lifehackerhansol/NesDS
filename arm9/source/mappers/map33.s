@@ -23,8 +23,9 @@ mapper48init:	@Taito...
 write8000:
 @---------------------------------------------------------------------------------
 	and addy,addy,#3
-	adr r1,write8tbl
-	ldr pc,[r1,addy,lsl#2]
+	ldr pc,[pc,addy,lsl#2]
+	nop
+write8tbl: .word w80,mapAB_,chr01_,chr23_
 w80:
 	ldr_ r1,mswitch
 	tst r1,#0xFF
@@ -35,7 +36,6 @@ w80:
 	ldmfd sp!,{r0,lr}
 	b map89_
 
-write8tbl: .word w80,mapAB_,chr01_,chr23_
 @---------------------------------------------------------------------------------
 writeA000:
 @---------------------------------------------------------------------------------

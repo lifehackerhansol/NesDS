@@ -2,10 +2,18 @@
 	#include "equates.h"
 @---------------------------------------------------------------------------------
 	.global mapper72init
+
+	reg0 = mapperData
 @---------------------------------------------------------------------------------
 .section .text,"ax"
 @---------------------------------------------------------------------------------
-mapper72init:	@Jaleco - Pinball Quest, Moero!! Pro Tennis, Moero!! Juudou Warroirs...
+@ Jaleco JF-17 board.
+@ Moero!! Juudou Warroirs...
+@ Moero!! Pro Tennis
+@ Pinball Quest
+@ Also see mapper 92
+@---------------------------------------------------------------------------------
+mapper72init:
 @---------------------------------------------------------------------------------
 	.word write72,write72,write72,write72
 
@@ -13,11 +21,16 @@ mapper72init:	@Jaleco - Pinball Quest, Moero!! Pro Tennis, Moero!! Juudou Warroi
 @---------------------------------------------------------------------------------
 write72:
 @---------------------------------------------------------------------------------
-	stmfd sp!,{r0,lr}
-	tst r0,#0x80
+	ldrb_ r1,reg0
+	strb_ r0,reg0
+	eor r1,r1,r0
+	and r1,r1,r0
+	stmfd sp!,{r0,r1,lr}
+//	ands r2,r0,#0x30		@ Sound bits, 0x20 is reset, 0x10 is select sound with adress bits.
+	tst r1,#0x80
 	blne map89AB_
-	ldmfd sp!,{r0,lr}
-	tst r0,#0x40
+	ldmfd sp!,{r0,r1,lr}
+	tst r1,#0x40
 	bne chr01234567_
 	bx lr
 @---------------------------------------------------------------------------------

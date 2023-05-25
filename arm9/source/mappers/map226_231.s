@@ -1,27 +1,20 @@
 @---------------------------------------------------------------------------------
 	#include "equates.h"
 @---------------------------------------------------------------------------------
-	.global mapper225init
 	.global mapper226init
 	.global mapper227init
 	.global mapper229init
 	.global mapper230init
 	.global mapper231init
+
 	tmp = mapperData
 	tmp1 = mapperData + 4
 	reg0 = mapperData + 8
 	reg1 = mapperData + 12
 	tmp2 = mapperData + 16
+
 @---------------------------------------------------------------------------------
 .section .text,"ax"
-@---------------------------------------------------------------------------------
-mapper225init:
-@---------------------------------------------------------------------------------
-	.word w225, w225, w225, w225
-	
-	mov r0, #0
-	b map89ABCDEF_
-	
 @---------------------------------------------------------------------------------
 mapper226init:
 @---------------------------------------------------------------------------------
@@ -91,44 +84,6 @@ mapper231init:
 	ldmfd sp!, {lr}
 	mov r0, #0
 	b map89ABCDEF_
-
-@-----------------
-w225:
-@-----------------
-	stmfd sp!, {lr}
-	str_ addy, tmp
-	and r0, addy, #0x3F
-	bl chr01234567_
-	ldr_ r0, tmp
-	tst r0, #0x2000
-	bl mirror2V_
-	ldr_ addy, tmp
-	mov r1, addy, lsr#7
-	str_ r1, tmp1
-	tst addy, #0x1000
-	beq w225_4k
-	tst addy, #0x40
-	beq w225_l
-	ldr_ r0, tmp1
-	mov r0, r0, lsl#1
-	add r0, r0, #1
-	str_ r0, tmp
-	bl map89AB_
-	ldr_ r0, tmp
-	bl mapCDEF_
-	ldmfd sp!, {pc}
-w225_l:
-	ldr_ r0, tmp1
-	mov r0, r0, lsl#1
-	str_ r0, tmp
-	bl map89AB_
-	ldr_ r0, tmp
-	bl mapCDEF_
-	ldmfd sp!, {pc}
-w225_4k:
-	ldr_ r0, tmp1
-	bl map89ABCDEF_
-	ldmfd sp!, {pc}
 
 @-----------------
 w226:
@@ -268,7 +223,7 @@ w230:
 	ands r1, r1, r1
 	andne r0, r0, #7
 	bne map89AB_
-	
+
 	mov addy, lr
 	str_ r0, tmp
 	tst r0, #0x40

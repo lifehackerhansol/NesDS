@@ -2,6 +2,7 @@
 	#include "equates.h"
 @---------------------------------------------------------------------------------
 	.global mapper253init
+
 	latch = mapperData+0
 	irqen = mapperData+1
 	k4irq = mapperData+2
@@ -101,7 +102,7 @@ writeEF:
 
 	and r1, addy, #0xc
 	ldr pc, [pc, r1]
-	mov r0, r0
+	nop
 	.word KoLatchLo, KoLatchHi, KoIRQEnable, KoIRQack
 
 @------------------------

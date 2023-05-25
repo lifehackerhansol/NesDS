@@ -29,8 +29,9 @@ write8000:
 
 write9000:
 	and addy,addy,#7
-	adr r1,write9tbl
-	ldr pc,[r1,addy,lsl#2]
+	ldr pc,[pc,addy,lsl#2]
+	nop
+write9tbl: .word w90,w91,void,w93,w94,w95,w96,void
 
 w90:
 	ldrb_ r1,mswitch
@@ -60,7 +61,6 @@ w96:
 	strb_ r0,latch
 	bx lr
 
-write9tbl: .word w90,w91,void,w93,w94,w95,w96,void
 @---------------------------------------------------------------------------------
 writeA000:
 @---------------------------------------------------------------------------------

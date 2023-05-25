@@ -24,7 +24,7 @@ mapper64init:
 @---------------------------------------------------------------------------------
 	.word write0,write1,write2,write3
 
-	adr r0,RAMBO_IRQ_Hook
+	adr r0,RAMBO1HSync
 	str_ r0,scanlineHook
 
 	bx lr
@@ -92,7 +92,7 @@ write3:		@E000-E001
 	beq m6502SetIRQPin
 	bx lr
 @---------------------------------------------------------------------------------
-RAMBO_IRQ_Hook:
+RAMBO1HSync:
 @---------------------------------------------------------------------------------
 @	ldrb r0,ppuCtrl1
 @	tst r0,#0x18	@no sprite/BG enable?  0x18
