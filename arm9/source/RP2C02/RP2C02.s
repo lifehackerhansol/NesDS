@@ -1,3 +1,5 @@
+#ifdef __arm__
+
 @---------------------------------------------------------------------------------
 	#include "macro.h"
 //	#include "RP2C02.i"
@@ -9,6 +11,7 @@
 	.global PPU_W
 	.global ppuOamDataW
 	.global updateINTPin
+	.global ppuDoScanline
 	.global agb_nt_map
 	.global vram_map
 	.global vram_write_tbl
@@ -99,7 +102,7 @@
 	.byte 248,179,0, 140,188,0, 64,168,88, 88,248,152, 0,183,191, 120,120,120, 0,0,0, 0,0,0
 	.byte 255,255,255, 167,231,255, 184,184,248, 216,184,248, 230,166,255, 242,157,196, 240,192,176, 252,228,176
 	.byte 224,224,30, 216,248,120, 192,232,144, 149,247,200, 152,224,232, 248,216,248, 0,0,0, 0,0,0
-	
+
 @nes_rgb_4:		@ Matthew Conte palette
 	.byte 128,128,128, 0,0,187, 55,0,191, 132,0,166, 187,0,106, 183,0,30, 179,0,0, 145,38,0
 	.byte 123,43,0, 0,62,0, 0,72,13, 0,60,34, 0,47,102, 0,0,0, 5,5,5, 5,5,5
@@ -129,7 +132,7 @@
 	.byte 248,184,0, 184,248,24, 91,219,87, 88,248,152, 0,235,219, 120,120,120, 0,0,0, 0,0,0
 	.byte 255,255,255, 167,231,255, 184,184,248, 216,184,248, 248,184,248, 251,167,195, 240,208,176, 255,227,171
 	.byte 251,219,123, 216,248,120, 184,248,184, 184,248,216, 0,255,255, 248,216,248, 0,0,0, 0,0,0
-	
+
 @nes_rgb_7:		@Quors palette
 	.byte 63,63,63, 0,31,63, 0,0,63, 31,0,63, 63,0,63, 63,0,32, 63,0,0, 63,32,0
 	.byte 63,63,0, 32,63,0, 0,63,0, 0,63,32, 0,63,63, 0,0,0, 0,0,0, 0,0,0
@@ -139,7 +142,7 @@
 	.byte 191,191,128, 160,191,128, 128,191,128, 128,191,160, 128,191,191, 0,0,0, 0,0,0, 0,0,0
 	.byte 255,255,255, 192,223,255, 192,192,255, 223,192,255, 255,192,255, 255,192,224, 255,192,192, 255,224,192
 	.byte 255,255,192, 224,255,192, 192,255,192, 192,255,224, 192,255,255, 0,0,0, 0,0,0, 0,0,0
-	
+
 DISPCNT_INIT = 0x38810010		@1D OBJ
 
 @---------------------------------------------------------------------------------
@@ -231,7 +234,7 @@ pxall:
 	strh r0,[r1,r3]	@store in agb palette
 	subs r2,r2,#1
 	bpl pxall
-	
+
 	ldmfd sp!,{r0-r4}
 	bx lr
 
@@ -386,6 +389,14 @@ PPU_reset:
 	ldreq r0,=261			@NTSC
 	ldrne r0,=311			@PAL
 	str_ r0,lastScanline
+	str r0,ppuTotalLines
+
+	ldr r2,=PPULineStateTable
+	ldr r1,[r2],#4
+	mov r0,#-1
+	str_ r0,scanline		;@ Reset scanline, nextChange & lineState
+	str_ r1,nextLineChange
+	str_ r2,lineState
 
 	mov r0,#1
 	strb_ r0,vramAddrInc
@@ -707,16 +718,96 @@ scale: .word 0			@bit0=even/odd
 DMAline: .word 0
 DMAlinestart: .word 0
 
+;@----------------------------------------------------------------------------
+PPULineStateTable:
+	.long 0, newframe			;@ ppuZeroLine
+	.long 119, midFrame			;@ ppuMidScanline
+	.long 240, line240			;@ Last visible scanline
+	.long 240, line240NMI		;@ frameIRQ on
+ppuTotalLines:
+	.long 262, frameEndHook		;@ totalScanlines
+;@----------------------------------------------------------------------------
+redoScanline:
+;@----------------------------------------------------------------------------
+	ldr_ r2,lineState
+	ldmia r2!,{r0,r1}
+	str_ r1,nextLineChange		;@ Write nextLineChange & lineState
+	str_ r2,lineState
+	adr lr,continueScanline
+	bx r0
+;@----------------------------------------------------------------------------
+ppuDoScanline:			;@ Returns number of CPU cycles to execute.
+;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+continueScanline:
+//	ldmia puptr,{r0,r1}			;@ Read scanLine & nextLineChange
+	ldr_ r0,scanline
+	ldr_ r1,nextLineChange
+	add r0,r0,#1
+	cmp r0,r1
+	bpl redoScanline
+	str_ r0,scanline
+
+	cmp r0,#240
+	blmi ppusync
+
+	mov lr,pc
+	ldr_ pc,scanlineHook
+
+	ldr_ r0,scanline
+	subs r0,r0,#241				;@ Return from emulation loop on this scanline
+	ldrne_ r0,cyclesPerScanline
+	ldmfd sp!,{pc}
+
+@---------------------------------------------------------------------------------
+midFrame:
+	ldrb_ r0,ppuCtrl0
+	strb_ r0,ppuCtrl0Frame		@ Contra likes this
+	bx lr
+
+@---------------------------------------------------------------------------------
+line240:
+NMIDELAY = 2
+
+	ldrb_ r1,ppuStat
+	orr r1,r1,#0x80		@ vbl flag
+	strb_ r1,ppuStat
+
+	mov r0,#NMIDELAY	@ NMI is delayed a few cycles..
+	ldmfd sp!,{pc}		@ Break early
+@---------------------------------------------------------------------------------
+line240NMI:
+	ldr_ r0,frame
+	add r0,r0,#1
+	str_ r0,frame
+
+	stmfd sp!,{lr}
+	bl updateINTPin
+	ldmfd sp!,{lr}
+	sub cycles,cycles,#NMIDELAY*CYCLE
+
+	ldr_ pc, endFrameHook
+
+@---------------------------------------------------------------------------------
+frameEndHook:
+	adr r2,PPULineStateTable
+	ldr r1,[r2],#4
+	mov r0,#-1
+	str_ r0,scanline		;@ Reset scanline, nextChange & lineState
+	str_ r1,nextLineChange
+	str_ r2,lineState
+	bx lr
+
 @---------------------------------------------------------------------------------
 updateINTPin:
 @---------------------------------------------------------------------------------
 	stmfd sp!,{r0,lr}
-	ldrb_ r0,ppuStat
-	ldrb_ r1,ppuCtrl0
+	ldrb_ r0,ppuCtrl0
+	ldrb_ r1,ppuStat
 	and r0,r0,r1
-	mov r0,r0,lsr#7
+	and r0,r0,#0x80
 	mov lr,pc
-	ldr_ pc,ppuIrqFunc			@ Clear NMI Pin
+	ldr_ pc,ppuIrqFunc		@ Set INT Pin (on PPU)
 	ldmfd sp!,{r0,pc}
 @---------------------------------------------------------------------------------
 PPU_R:@
@@ -763,8 +854,6 @@ ctrl0_W:		@(2000)
 	orr r1, r1, r2, lsl#10
 	str_ r1, loopy_t
 
-	strb_ r0,ppuCtrl0
-
 	mov r1,#1				@+1/+32
 	tst r0,#4
 	movne r1,#32
@@ -774,8 +863,14 @@ ctrl0_W:		@(2000)
 	and r1,r1,#1
 	strb_ r1,scrollYTemp+1	@Y scroll
 
-	and r0,r0,#1			@X scroll
-	strb_ r0,scrollX+1
+	and r1,r0,#1			@X scroll
+	strb_ r1,scrollX+1
+
+	ldrb_ r1,ppuCtrl0
+	strb_ r0,ppuCtrl0
+	eor r0,r0,r1
+	ands r0,r0,#0x80
+	bxeq lr
 	b updateINTPin
 @---------------------------------------------------------------------------------
 ctrl1_W:		@(2001)
@@ -838,6 +933,8 @@ stat_R:		@(2002)
 	and r1,r1,#0x1F
 	orr r0,r2,r1
 
+	tst r0,#0x80				@ Was VBlank set before?
+	bxeq lr
 	b updateINTPin
 @---------------------------------------------------------------------------------
 oamAddr_W:		@(2003)
@@ -886,21 +983,19 @@ bgScrollX:
 bgScrollY:
 	strb_ r0,scrollYTemp
 
-	and r2, r0, #0xF8
-	and r0, r0, #7
+	mov r0, r0, ror#3
+	orr r0, r0, r0, lsr#22
 
 	ldr_ r1,loopy_t
 	bic r1, r1, #0x03E0
 	bic r1, r1, #0x7000
-	orr r1, r1, r2, lsl#2
-	orr r1, r1, r0, lsl#12
+	orr r1, r1, r0, lsl#5
 	str_ r1, loopy_t
 
 	ldr_ r1,vramAddr2	@yscroll modifies vramAddrTmp
-	bic r1,r1,#0x03E00
+	bic r1,r1,#0x03E0
 	bic r1,r1,#0x7000
-	orr r1,r1,r2,lsl#2
-	orr r1,r1,r0,lsl#12
+	orr r1,r1,r0,lsl#5
 	str_ r1,vramAddr2
 
 	bx lr
@@ -1098,7 +1193,6 @@ VRAM_pal:	@($3F00-$3F1F)
 
 	add r0,r0,r0
 	ldr r1,=MAPPED_RGB
-@	ldr r0,[r1,r0,lsl#1]	@lookup RGB, unaligned read.
 	ldrh r0,[r1,r0]			@lookup RGB
 	adr r1,agb_pal
 	add addy,addy,addy	@lsl#1
@@ -1109,9 +1203,17 @@ VRAM_pal:	@($3F00-$3F1F)
 	str_ r1, palSyncLine
 	bx lr
 @---------------------------------------------------------------------------------
-newframe:	@called at NES scanline 0	(r0-r9 safe to use)
+newframe:	@ Called at NES scanline 0
 @---------------------------------------------------------------------------------
 	stmfd sp!,{r3-r9,lr}
+
+	ldr_ r1,frame
+	tst r1,#1
+	subeq cycles,cycles,#CYCLE		@ Every other frame has 1 less PPU cycle.
+
+	mov r0,#0
+	strb_ r0,ppuStat			@ vbl, sprite0 & sprite ovr clear
+	bl updateINTPin
 
 	ldr_ r0, loopy_t
 	str_ r0, loopy_v
@@ -1278,15 +1380,15 @@ mirrorchange:
 
 		ldmia r0!,{r1}
 		str_ r1,bg0Cnt
-		
+
 		ldr r1,=nes_nt0
 		ldmia r0!,{r2-r5}
 		stmia r1,{r2-r5}
-		
+
 		ldr r1,=agb_nt_map
 		ldmia r0!,{r2-r5}
 		stmia r1,{r2-r5}
-	
+
 	ldmfd sp!,{r3-r5,pc}
 .ltorg
 @---------------------------------------------------------------------------------
@@ -1573,7 +1675,8 @@ bankptr	.req r6 @vrom bank lookup ptr
 unpack_tiles:	@r1=old^new, r5=CHR dst, r6=map ---------UPDATEOBJCHR JUMPS HERE
 
 	ldr decodeptr,=CHR_DECODE
-bg0:	 movs r0, r1, lsl#16
+bg0:
+	 movs r0, r1, lsl#16
 	 ldrh r0,[bankptr],#2
 	 mov r1,r1,lsr#16
 	 addeq agbptr,agbptr,#0x800
@@ -1581,8 +1684,8 @@ bg0:	 movs r0, r1, lsl#16
 	 mov tilecount,#64
 	 ldr_ nesptr,vromBase
 	 add nesptr,nesptr,r0,lsl#10	@bank#*$400
-
-bg1:	  ldrb r0,[nesptr],#1
+bg1:
+	  ldrb r0,[nesptr],#1
 	  ldrb r7,[nesptr,#7]
 	  ldr r0,[decodeptr,r0,lsl#2]
 	  ldr r7,[decodeptr,r7,lsl#2]
@@ -1593,10 +1696,12 @@ bg1:	  ldrb r0,[nesptr],#1
 	 subs tilecount,tilecount,#1
 	 add nesptr,nesptr,#8
 	 bne bg1
-bg2:	tst bankptr,#3
+bg2:
+	tst bankptr,#3
 	bne bg0
 
-bg0_:	 movs r0, r9, lsl#16
+bg0_:
+	 movs r0, r9, lsl#16
 	 ldrh r0,[bankptr],#2
 	 mov r9,r9,lsr#16
 	 addeq agbptr,agbptr,#0x800
@@ -1604,8 +1709,8 @@ bg0_:	 movs r0, r9, lsl#16
 	 mov tilecount,#64
 	 ldr_ nesptr,vromBase
 	 add nesptr,nesptr,r0,lsl#10	@bank#*$400
-
-bg1_:	  ldrb r0,[nesptr],#1
+bg1_:
+	  ldrb r0,[nesptr],#1
 	  ldrb r7,[nesptr,#7]
 	  ldr r0,[decodeptr,r0,lsl#2]
 	  ldr r7,[decodeptr,r7,lsl#2]
@@ -1616,7 +1721,8 @@ bg1_:	  ldrb r0,[nesptr],#1
 	 subs tilecount,tilecount,#1
 	 add nesptr,nesptr,#8
 	 bne bg1_
-bg2_:	tst bankptr,#3
+bg2_:
+	tst bankptr,#3
 	bne bg0_
 
 	bx lr
@@ -2102,3 +2208,6 @@ obj_tileset:
 	.skip 240
 @---------------------------------------------------------------------------------
 nes_maps:	.skip 240*16
+@---------------------------------------------------------------------------------
+	.end
+#endif // #ifdef __arm__

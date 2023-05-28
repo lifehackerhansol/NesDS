@@ -25,9 +25,6 @@ pcmirqcount = mapperData+28
 @---------------------------------------------------------------------------------
 NSF_Run:
 @---------------------------------------------------------------------------------
-	adr r1,nsfOut
-	str r1,returnAddress
-
 	ldr r0, =__nsfPlay
 	ldr r0, [r0]
 	ands r0, r0, r0
@@ -52,9 +49,6 @@ NSF_Run:
 	ldr r2, =0x2000/4
 	bl filler
 0:
-	ldr_ r0,cyclesPerScanline
-	add cycles,cycles,r0, lsl#14
-
 	ldr addy, =0x4015
 	mov r0, #0xf
 	bl soundwrite
@@ -76,41 +70,41 @@ NSF_Run:
 	ldr r0, =__nsfSongMode
 	ldr m6502x, [r0]
 	mov m6502y, #0
-	ldr r0,=NES_RAM+0x100
+	mov r0,#1
 	str_ r0, m6502RegSP
 	orr cycles,#CYC_I
 
 	mov r0, #0
 	ldr r1, =__nsfInit
 	str r0, [r1]
-	b handleScanlineHook
+
+	ldr_ r0,cyclesPerScanline
+	mov r0,r0, lsl#14
+	bl m6502RunXCycles
+	b nsfOut
 
 noInit:
-	ldr_ r0,cyclesPerScanline
-	add cycles,cycles,r0, lsl#8
-
 	ldr_ r1,m6502LastBank
 	sub m6502pc,m6502pc,r1
 	cmp m6502pc, #0x4700
-	bne handleScanlineHook
+	bne nsfRun
 
 	ldr m6502pc, =0x4720
 	encodePC
-	ldr r0,=NES_RAM+0x100
+	mov r0,#1
 	str_ r0, m6502RegSP
 	mov m6502a, #0
-	b handleScanlineHook
+	b nsfRun
 
 noPlay:
-	ldr_ r0,cyclesPerScanline
-	add cycles,cycles,r0, lsl#8
-
 	ldr m6502pc, =0x4700
 	encodePC
-	ldr r0,=NES_RAM+0x100
+	mov r0,#1
 	str_ r0, m6502RegSP
-	b handleScanlineHook
-
+nsfRun:
+	ldr_ r0,cyclesPerScanline
+	mov r0,r0, lsl#8
+	bl m6502RunXCycles
 nsfOut:
 	adr_ r2,m6502Regs
 	stmia r2,{m6502nz-m6502pc}	@ save 6502 state
@@ -118,181 +112,61 @@ nsfOut:
 	ldmfd sp!,{r4-r11,pc}
 
 @---------------------------------------------------------------------------------
-@cycles ran out
+EMU_Run:
 @---------------------------------------------------------------------------------
-line0:
-	mov r0,#0
-	strb_ r0,ppuStat			@ vbl, sprite0 & sprite ovr clear
-	str_ r0,scanline			@ reset scanline count
-	bl updateINTPin
+	stmfd sp!,{r4-r11,lr}
+	ldr globalptr,=globals
+	adr_ r0,m6502Regs
+	ldmia r0,{m6502nz-m6502pc,m6502zpage}	@ restore 6502 state
 
-	bl newframe					@ display update
-
-	mov r0,#0
-	bl ppusync
-
+	@--- beginning of EMU_Run
 	ldr_ r0,cyclesPerScanline
-	ldr_ r1,frame
-	tst r1,#1
-	subeq r0,r0,#CYCLE			@ Every other frame has 1 less PPU cycle.
-	add cycles,cycles,r0
-	adr r0,line1_to_119
-	str r0,returnAddress
-	b handleScanlineHook
-@---------------------------------------------------------------------------------
-line1_to_119:
-	ldr_ r0,cyclesPerScanline
-	add cycles,cycles,r0
-
-	ldr_ r0,scanline
-	add r0,r0,#1
-	str_ r0,scanline
-	cmp r0,#119
-	beq line119
-
-	bl ppusync
-	b handleScanlineHook
-@---------------------------------------------------------------------------------
-line119:
-	bl ppusync
-
-	ldrb_ r0,ppuCtrl0
-	strb_ r0,ppuCtrl0Frame		@ Contra likes this
-
-	adr addy,line120_to_240
-	str addy,returnAddress
-	b handleScanlineHook
-@---------------------------------------------------------------------------------
-line120_to_240:
-	ldr_ r0,cyclesPerScanline
-	add cycles,cycles,r0
-
-	ldr_ r0,scanline
-	add r0,r0,#1
-	str_ r0,scanline
-
-	cmp r0,#240
-	adreq addy,line241
-	streq addy,returnAddress
-	blne ppusync
-	b handleScanlineHook
-@---------------------------------------------------------------------------------
-line241:
-NMIDELAY = 2*CYCLE
-
-
-	add cycles,cycles,#NMIDELAY	@ NMI is delayed a few cycles..
-
-	ldrb_ r1,ppuStat
-	orr r1,r1,#0x80		@ vbl flag
-	strb_ r1,ppuStat
-
-	adr addy,line241NMI
-	str addy,returnAddress
-	b handleScanlineHook
-@---------------------------------------------------------------------------------
-line241NMI:
-	ldr_ r0,frame
-	add r0,r0,#1
-	str_ r0,frame
-
-	bl updateINTPin
-0:
-	sub cycles,cycles,#NMIDELAY
-
+;@----------------------------------------------------------------------------
+nesFrameLoop:
+;@----------------------------------------------------------------------------
+	bl m6502RunXCycles
+	bl ppuDoScanline
+	cmp r0,#0
+	bne nesFrameLoop
 	@--- end of EMU_Run
-	adr_ r2,m6502Regs
-	stmia r2,{m6502nz-m6502pc}	@ save 6502 state
+
+	adr_ r0,m6502Regs
+	stmia r0,{m6502nz-m6502pc}	@ save 6502 state
 
 	bl refreshNESjoypads
 
 	bl updatesound
 
-	adr lr, 2f
-	ldr_ pc, endFrameHook
-2:
 	ldmfd sp!,{r4-r11,pc}
 
-@---------------------------------------------------------------------------------
-EMU_Run:
-@---------------------------------------------------------------------------------
-	stmfd sp!,{r4-r11,lr}
-
-	ldr globalptr,=globals
-
-	adr_ r0,m6502Regs
-	ldmia r0,{m6502nz-m6502pc,m6502zpage}	@ restore 6502 state
-
-	ldr_ r0,cyclesPerScanline
-	add cycles,cycles,r0
-
-	mov r0,#241
-	str_ r0,scanline
-
-	adr r1,line242_to_end
-	str r1,returnAddress
-
-	ldr_ r1,emuFlags
-	tst r1, #NSFFILE
-	bne NSF_Run
-
-	b handleScanlineHook
-@---------------------------------------------------------------------------------
-line242_to_end:
-	ldr_ r0,cyclesPerScanline
-	add cycles,cycles,r0
-
-	ldr_ r1,scanline
-	ldr_ r2,lastScanline
-	add r1,r1,#1
-	str_ r1,scanline
-	cmp r1,r2
-	bne handleScanlineHook
-
-	adr addy,line0
-	str addy,returnAddress
-	b handleScanlineHook
-
-returnAddress:
-	.long 0
 @---------------------------------------------------------------------------------
 pcm_scanlineHook:
 @---------------------------------------------------------------------------------
 	@ldr addy,=pcmctrl
 	@ldr r2,[addy]
-	@tst r2,#0x1000			@Is PCM on?
+	@tst r2,#0x1000			@ Is PCM on?
 	@bxeq lr
 	bx lr
 
 	ldr_ r0,pcmirqcount
 @	ldr_ r1,cyclesPerScanline
 @	subs r0,r0,r1,lsr#4
-	subs r0,r0,#121			@Fire Hawk=122
+	subs r0,r0,#121			@ Fire Hawk=122
 	str_ r0,pcmirqcount
 	bxpl lr
 
-	tst r2,#0x40			@Is PCM loop on?
+	tst r2,#0x40			@ Is PCM loop on?
 	ldrne_ r0,pcmirqbakup
 	strne_ r0,pcmirqcount
 	bxne lr
-	tst r2,#0x80			@Is PCM IRQ on?
-	orrne r2,r2,#0x8000		@set pcm IRQ bit in R4015
-	bic r2,r2,#0x1000		@clear channel 5
+	tst r2,#0x80			@ Is PCM IRQ on?
+	orrne r2,r2,#0x8000		@ set pcm IRQ bit in R4015
+	bic r2,r2,#0x1000		@ clear channel 5
 	str r2,[addy]
 	bne m6502SetIRQPin
 
 	bx lr
 
-handleScanlineHook:
-//	adr lr,slhRet
-//	ldr_ pc,scanlineHook
-//slhRet:
-//	ldr lr,returnAddress
-//	b m6502Run
-	ldr lr,returnAddress
-	stmfd sp!,{lr}
-	ldr lr,=m6502CheckIrqs
-	ldr_ pc,scanlineHook
 @---------------------------------------------------------------------------------
 ntsc_pal_reset:
 @---------------------------------------------------------------------------------
@@ -303,9 +177,9 @@ ntsc_pal_reset:
 	ldr_ r1,emuFlags
 	tst r1,#PALTIMING
 
-//	ldreq r1,=341*CYCLE		@NTSC		(113+2/3)*3
-//	ldrne r1,=320*CYCLE		@PAL		(106+9/16)*3
-	mov r1,#113*CYCLE
+//	ldreq r1,=341			@NTSC		(113+2/3)*3
+//	ldrne r1,=320			@PAL		(106+9/16)*3
+	mov r1,#113
 	str_ r1,cyclesPerScanline
 	mov globalptr, r2
 

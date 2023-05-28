@@ -7,6 +7,8 @@ extern "C" {
 
 typedef struct {
 	u32 scanline;
+	u32 nextLineChange;
+	u32 lineState;
 	u32 scanlineHook;
 	u32 frame;
 	u32 cyclesPerScanline;
@@ -26,12 +28,12 @@ typedef struct {
 	u8 ppuBusLatch;
 	u8 sprite0X;
 	u8 vramAddrInc;
-	u8 ppuStat;
 	u8 toggle;
 	u8 ppuCtrl0;
-	u8 ppuCtrl0Frame;
 	u8 ppuCtrl1;
+	u8 ppuStat;
 	u8 ppuOamAdr;
+	u8 ppuCtrl0Frame;
 	u8 unused_align[3];
 #if !defined DEBUG
 	u8 unusedAlign2[8];

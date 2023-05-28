@@ -393,7 +393,7 @@ hook:
 	ldrb_ r0,mmc5irqr
 	cmp r1,#0
 	orreq r0,#0x40
-//	beq h1
+	beq h1
 
 	cmp r1,#240
 	biceq r0,r0,#0xC0
@@ -409,6 +409,8 @@ hook:
 	bx lr
 h1:
 	strb_ r0,mmc5irqr
-	and r0,r0,#80
-	b m6502SetIRQPin
+	ldrb_ r1,enable
+	ands r0,r0,r1
+	beq m6502SetIRQPin
+	bx lr
 @---------------------------------------------------------------------------------

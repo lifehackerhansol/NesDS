@@ -8,7 +8,9 @@ start_map m6502Size,globalptr	@6502.s
 
 @ppuState:
 	@RP2C02.s
-_m_ scanline,4
+_m_ scanline,4			;@ These 3 must be first in state.
+_m_ nextLineChange,4
+_m_ lineState,4
 _m_ scanlineHook,4
 _m_ frame,4
 _m_ cyclesPerScanline,4
@@ -29,16 +31,13 @@ _m_ bg0Cnt,4
 _m_ ppuBusLatch,1
 _m_ sprite0X,1
 _m_ vramAddrInc,1
-_m_ ppuStat,1
 _m_ toggle,1
 _m_ ppuCtrl0,1
-_m_ ppuCtrl0Frame,1
 _m_ ppuCtrl1,1
+_m_ ppuStat,1
 _m_ ppuOamAdr,1
+_m_ ppuCtrl0Frame,1
 _m_ unused_align,3
-#if !defined DEBUG
-_m_ unusedAlign2,8
-#endif
 _m_ nesChrMap,16
 
 _m_ loopy_t,4
