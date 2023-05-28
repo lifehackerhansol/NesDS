@@ -446,6 +446,8 @@ NES_reset:
 	ldr m6502zpage,=NES_RAM
 
 	bl PPU_reset
+	ldr r0,=m6502SetNMIPin
+	str_ r0,ppuIrqFunc
 	bl IO_reset
 	bl Sound_reset
 	bl CPU_reset

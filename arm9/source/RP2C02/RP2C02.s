@@ -8,6 +8,7 @@
 	.global PPU_R
 	.global PPU_W
 	.global ppuOamDataW
+	.global updateINTPin
 	.global agb_nt_map
 	.global vram_map
 	.global vram_write_tbl
@@ -698,7 +699,7 @@ soft_sync:
 
 	bl soft_render
 	bl scanlinenext
-	ldmfd sp!, {r4-r12}
+	ldmfd sp!,{r4-r12}
 	ldmfd sp!,{r3,pc}
 
 gfx_scale:
@@ -706,6 +707,17 @@ scale: .word 0			@bit0=even/odd
 DMAline: .word 0
 DMAlinestart: .word 0
 
+@---------------------------------------------------------------------------------
+updateINTPin:
+@---------------------------------------------------------------------------------
+	stmfd sp!,{r0,lr}
+	ldrb_ r0,ppuStat
+	ldrb_ r1,ppuCtrl0
+	and r0,r0,r1
+	mov r0,r0,lsr#7
+	mov lr,pc
+	ldr_ pc,ppuIrqFunc			@ Clear NMI Pin
+	ldmfd sp!,{r0,pc}
 @---------------------------------------------------------------------------------
 PPU_R:@
 @---------------------------------------------------------------------------------
@@ -745,8 +757,6 @@ empty_PPU_R:
 @---------------------------------------------------------------------------------
 ctrl0_W:		@(2000)
 @---------------------------------------------------------------------------------
-	stmfd sp!,{lr}
-
 	ldr_ r1, loopy_t
 	bic r1, r1, #0xC00
 	and r2, r0, #3
@@ -766,7 +776,7 @@ ctrl0_W:		@(2000)
 
 	and r0,r0,#1			@X scroll
 	strb_ r0,scrollX+1
-	ldmfd sp!,{pc}
+	b updateINTPin
 @---------------------------------------------------------------------------------
 ctrl1_W:		@(2001)
 @---------------------------------------------------------------------------------
@@ -806,32 +816,29 @@ stat_R:		@(2002)
 	tst r0, #SOFTRENDER
 	bne 0f
 
-	ldr_ r0,sprite0Y			@sprite0 hit?
+	ldrb_ r1, ppuCtrl1
+	tst r1, #0x10				@ sprites on?
+	beq 0f
+
+	ldr_ r0,sprite0Y			@ sprite0 hit?
 	ldr_ r1,scanline
 	cmp r1,r0
 @	ble noSprH
-@	ldrb r0,sprite0X			@for extra high resolution sprite0 hit
-@	ldr r1,cyclesPerScanline	@the store is in IO.s
+@	ldrb r0,sprite0X			@ for extra high resolution sprite0 hit
+@	ldr r1,cyclesPerScanline	@ the store is in IO.s
 @	sub r1,r1,cycles
 @	cmp r1,r0
-	bic r2, #0x40
 	orrhi r2,r2,#0x40
 @noSprH
 0:
-	bic r1,r2,#0x80				@vbl flag clear
+	bic r1,r2,#0x80				@ vbl flag clear
 	strb_ r1,ppuStat
-
-	mov r0, r2
-
-	ldrb_ r1, ppuCtrl1
-	tst r1, #0x10
-	biceq r0, #0x60
 
 	ldrb_ r1,ppuBusLatch
 	and r1,r1,#0x1F
-	orr r0,r0,r1
+	orr r0,r2,r1
 
-	bx lr
+	b updateINTPin
 @---------------------------------------------------------------------------------
 oamAddr_W:		@(2003)
 @---------------------------------------------------------------------------------

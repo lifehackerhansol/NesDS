@@ -92,11 +92,6 @@ REG_WIN1V		= 0x46
 REG_BLDCNT		= 0x50
 REG_BLDALPHA		= 0x52
 
-@start_map 0,m6502zpage
-@_m_ nes_ram,0x800
-@_m_ nes_sram,0x2000
-@_m_ chr_decode,0x400
-
 @everything in wram_globals* areas:
 
 globalptr	.req r10	@ =wram_globals* ptr
@@ -158,8 +153,6 @@ REWIND			= 0x40000
 ALLPIXELON		= 0x80000
 NSFFILE			= 0x100000
 DISKBIOS		= 0x200000
-@?			EQU 64
-@?			EQU 128
 
 
 @------------------------multi-players

@@ -115,16 +115,16 @@ nsfOut:
 	adr_ r2,m6502Regs
 	stmia r2,{m6502nz-m6502pc}	@ save 6502 state
 	bl updatesound
-	ldmfd sp!,{m6502nz-m6502pc,globalptr,m6502zpage,pc}
+	ldmfd sp!,{r4-r11,pc}
 
 @---------------------------------------------------------------------------------
 @cycles ran out
 @---------------------------------------------------------------------------------
 line0:
 	mov r0,#0
-	strb_ r0,ppuStat			@ vbl clear, sprite0 clear
+	strb_ r0,ppuStat			@ vbl, sprite0 & sprite ovr clear
 	str_ r0,scanline			@ reset scanline count
-	bl m6502SetNMIPin			@ Clear NMI Pin
+	bl updateINTPin
 
 	bl newframe					@ display update
 
@@ -178,14 +178,13 @@ line120_to_240:
 	b handleScanlineHook
 @---------------------------------------------------------------------------------
 line241:
-NMIDELAY = 7*CYCLE
+NMIDELAY = 2*CYCLE
 
 
 	add cycles,cycles,#NMIDELAY	@ NMI is delayed a few cycles..
 
-@	ldrb_ r1,ppuStat
-@	orr r1,r1,#0x90		@ vbl & vram write
-	mov r1,#0x80		@ vbl flag
+	ldrb_ r1,ppuStat
+	orr r1,r1,#0x80		@ vbl flag
 	strb_ r1,ppuStat
 
 	adr addy,line241NMI
@@ -197,11 +196,7 @@ line241NMI:
 	add r0,r0,#1
 	str_ r0,frame
 
-	ldrb_ r0,ppuCtrl0
-	tst r0,#0x80
-	beq 0f			@ NMI?
-	mov r0,#1
-	bl m6502SetNMIPin
+	bl updateINTPin
 0:
 	sub cycles,cycles,#NMIDELAY
 
@@ -216,18 +211,17 @@ line241NMI:
 	adr lr, 2f
 	ldr_ pc, endFrameHook
 2:
-	ldmfd sp!,{m6502nz-m6502pc,globalptr,m6502zpage,pc}
+	ldmfd sp!,{r4-r11,pc}
 
 @---------------------------------------------------------------------------------
 EMU_Run:
 @---------------------------------------------------------------------------------
-	stmfd sp!,{m6502nz-m6502pc,globalptr,m6502zpage,lr}
+	stmfd sp!,{r4-r11,lr}
 
 	ldr globalptr,=globals
-	ldr_ m6502zpage,m6502MemTbl+0
 
 	adr_ r0,m6502Regs
-	ldmia r0,{m6502nz-m6502pc}	@restore 6502 state
+	ldmia r0,{m6502nz-m6502pc,m6502zpage}	@ restore 6502 state
 
 	ldr_ r0,cyclesPerScanline
 	add cycles,cycles,r0

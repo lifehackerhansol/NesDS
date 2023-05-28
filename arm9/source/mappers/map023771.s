@@ -29,7 +29,7 @@ mapper71init:
 	.word map71w,void,map89AB_,map89AB_
 	adr r0, map71wl
 	str_ r0, m6502WriteTbl+12
-	
+
 	ldr_ r0, prgcrc
 	ldr r1, =0x11CF
 	cmp r0, r1

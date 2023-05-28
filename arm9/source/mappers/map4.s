@@ -225,6 +225,7 @@ mmc3MappingW:
 	tst addy, #1
 	bne w8001
 
+	strb_ r0, reg0
 	stmfd sp!, {lr}
 	bl setbank_cpu
 	ldmfd sp!, {lr}
