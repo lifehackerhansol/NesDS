@@ -177,9 +177,8 @@ ntsc_pal_reset:
 	ldr_ r1,emuFlags
 	tst r1,#PALTIMING
 
-//	ldreq r1,=341			@NTSC		(113+2/3)*3
-//	ldrne r1,=320			@PAL		(106+9/16)*3
-	mov r1,#113
+	ldreq r1,=341			@NTSC		(113+2/3)*3
+	ldrne r1,=320			@PAL		(106+9/16)*3
 	str_ r1,cyclesPerScanline
 	mov globalptr, r2
 

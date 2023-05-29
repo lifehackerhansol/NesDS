@@ -90,7 +90,7 @@ dma_W:	@(4014)		sprite DMA transfer
 @---------------------------------------------------------------------------------
 PRIORITY = 0x000	@0x800=AGB OBJ priority 2/3
 
-	ldr r1,=512*CYCLE		@ was 512...	514 is the right number...
+	ldr r1,=512*3*CYCLE		@ was 512...	514 is the right number...
 	sub cycles,cycles,r1
 	stmfd sp!,{r3-r8,lr}
 

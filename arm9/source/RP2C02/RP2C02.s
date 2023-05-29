@@ -736,7 +736,7 @@ redoScanline:
 	adr lr,continueScanline
 	bx r0
 ;@----------------------------------------------------------------------------
-ppuDoScanline:			;@ Returns number of CPU cycles to execute.
+ppuDoScanline:			;@ Returns number of PPU cycles to execute.
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 continueScanline:
@@ -773,7 +773,7 @@ NMIDELAY = 2
 	orr r1,r1,#0x80		@ vbl flag
 	strb_ r1,ppuStat
 
-	mov r0,#NMIDELAY	@ NMI is delayed a few cycles..
+	mov r0,#NMIDELAY*3	@ NMI is delayed a few cycles..
 	ldmfd sp!,{pc}		@ Break early
 @---------------------------------------------------------------------------------
 line240NMI:
@@ -784,7 +784,7 @@ line240NMI:
 	stmfd sp!,{lr}
 	bl updateINTPin
 	ldmfd sp!,{lr}
-	sub cycles,cycles,#NMIDELAY*CYCLE
+	sub cycles,cycles,#NMIDELAY*3*CYCLE
 
 	ldr_ pc, endFrameHook
 
