@@ -37,9 +37,9 @@ mapper163init:
 	bl map89ABCDEF_
 
 	adr r0, readl
-	str_ r0, m6502ReadTbl+8
+	str_ r0, rp2A03MemRead
 	adr r0, writel
-	str_ r0, m6502WriteTbl+8
+	str_ r0, rp2A03MemWrite
 	adr r0,hook
 	str_ r0,scanlineHook
 
@@ -49,7 +49,7 @@ mapper163init:
 readl:
 @---------------------------------------------------------------------------------
 	cmp addy, #0x5000
-	bcc IO_R
+	bcc empty_R
 	and r0, addy, #0x7700
 	cmp r0, #0x5100
 	cmpne r0, #0x5500
@@ -69,7 +69,7 @@ readl:
 writel:
 @---------------------------------------------------------------------------------
 	cmp addy, #0x5000
-	bcc IO_W
+	bcc empty_W
 	
 	mov r1, addy, lsr#8
 	and r2, r1, #0x3

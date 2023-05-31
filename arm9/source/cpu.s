@@ -6,6 +6,7 @@
 @---------------------------------------------------------------------------------
 	.global NSF_Run
 	.global EMU_Run
+	.global cpuInit
 	.global CPU_reset
 	.global pcm_scanlineHook
 
@@ -79,7 +80,7 @@ NSF_Run:
 
 	ldr_ r0,cyclesPerScanline
 	mov r0,r0, lsl#14
-	bl m6502RunXCycles
+	bl rp2A03RunXCycles
 	b nsfOut
 
 noInit:
@@ -103,7 +104,7 @@ noPlay:
 nsfRun:
 	ldr_ r0,cyclesPerScanline
 	mov r0,r0, lsl#8
-	bl m6502RunXCycles
+	bl rp2A03RunXCycles
 nsfOut:
 	adr_ r2,m6502Regs
 	stmia r2,{m6502nz-m6502pc}	@ save 6502 state
@@ -123,7 +124,7 @@ EMU_Run:
 ;@----------------------------------------------------------------------------
 nesFrameLoop:
 ;@----------------------------------------------------------------------------
-	bl m6502RunXCycles
+	bl rp2A03RunXCycles
 	bl ppuDoScanline
 	cmp r0,#0
 	bne nesFrameLoop
@@ -167,13 +168,16 @@ pcm_scanlineHook:
 	bx lr
 
 @---------------------------------------------------------------------------------
+cpuInit:
+@---------------------------------------------------------------------------------
+	ldr r0,=rp2A03
+	b rp2A03Init
+@---------------------------------------------------------------------------------
 CPU_reset:	@ Called by loadcart (r0-r9 are free to use)
 @---------------------------------------------------------------------------------
 	stmfd sp!,{lr}
 
 	ldr r0,=rp2A03
-	bl m6502Init
-
 	bl rp2A03Reset
 
 	ldmfd sp!,{lr}

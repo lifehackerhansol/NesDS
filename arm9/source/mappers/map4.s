@@ -90,9 +90,9 @@ mapper4init:
 	ldr r0,=mmc3HSync
 	str_ r0,scanlineHook
 	adr r0, writel
-	str_ r0, m6502WriteTbl+8
+	str_ r0, rp2A03MemWrite
 	adr r0, readl
-	str_ r0, m6502ReadTbl+8
+	str_ r0, rp2A03MemRead
 
 	ldmfd sp!, {lr}
 	bx lr
@@ -122,10 +122,10 @@ mapper4init:
 	@bx lr
 
 @---------------------------------------------------------------------------------
-writel:		@($4100-$5FFF)
+writel:		@($4020-$5FFF)
 @---------------------------------------------------------------------------------
 	cmp addy, #0x5000
-	bcc IO_W
+	bcc empty_W
 	sub r2, addy, #0x4000
 	ldr r1, =NES_XRAM
 	strb r0, [r1, r2]
@@ -135,7 +135,7 @@ writel:		@($4100-$5FFF)
 readl:		@($4100-$5FFF)
 @---------------------------------------------------------------------------------
 	cmp addy, #0x5000
-	bcc IO_R
+	bcc empty_R
 	sub r2, addy, #0x4000
 	ldr r1, =NES_XRAM
 	ldrb r0, [r1, r2]

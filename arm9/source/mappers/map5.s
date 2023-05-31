@@ -36,10 +36,10 @@ mapper5init:
 	.word void,void,void,void
 
 	adr r1,write0
-	str_ r1,m6502WriteTbl+8
+	str_ r1,rp2A03MemWrite
 
 	adr r1,mmc5_r
-	str_ r1,m6502ReadTbl+8
+	str_ r1,rp2A03MemRead
 
 	mov r0,#3
 	strb_ r0,prgSize
@@ -59,7 +59,7 @@ mapper5init:
 write0:
 @----------------------------------监视 char *-----------------------------------------------
 	cmp addy,#0x5000
-	blo IO_W
+	blo empty_W
 	cmp addy,#0x5100
 	blo map5Sound
 	cmp addy,#0x5c00
@@ -348,7 +348,7 @@ mmc5_c00r:
 @---------------------------------------------------------------------------------
 mmc5_r:		@5204,5205,5206
 	cmp addy,#0x5200
-	blo IO_R
+	blo empty_R
 	cmp addy,#0x5C00
 	bge mmc5_c00r
 	and r2,addy,#0xff

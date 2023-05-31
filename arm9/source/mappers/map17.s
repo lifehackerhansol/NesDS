@@ -12,7 +12,7 @@ mapper17init:
 	.word void,void,void,void
 
 	adr r1,write0
-	str_ r1,m6502WriteTbl+8
+	str_ r1,rp2A03MemWrite
 
 	adr r0,hook
 	str_ r0,scanlineHook
@@ -22,7 +22,7 @@ mapper17init:
 write0:
 @---------------------------------------------------------------------------------
 	cmp addy,#0x4100
-	blo IO_W
+	blo empty_W
 
 	and r2,addy,#0xff
 	cmp r2,#0xfe

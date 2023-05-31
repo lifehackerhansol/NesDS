@@ -202,9 +202,9 @@ bankswitchEnd:
 
 
 	adr r0, exRead
-	str_ r0, m6502ReadTbl + 8
+	str_ r0, rp2A03MemRead
 	adr r0, exWrite
-	str_ r0, m6502WriteTbl + 8
+	str_ r0, rp2A03MemWrite
 
 	@pal/ntsc?
 
@@ -216,7 +216,7 @@ exRead:
 @-------------------------------
 	ldr r1, =0x4800
 	cmp addy, r1
-	bne IO_R
+	bne empty_R
 
 	adr r1, exram
 	ldr_ r2, exAddr
@@ -239,7 +239,7 @@ exWrite:
 	cmp addy, r1
 	bxcs lr
 	cmp addy, #0x4800
-	bcc IO_W
+	bxcc lr
 	beq ew
 	cmp addy, #0x5000
 	bxcc lr

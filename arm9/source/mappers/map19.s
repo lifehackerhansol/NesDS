@@ -14,10 +14,10 @@ mapper19init:
 	.word map19_8,map19_A,map19_C,map19_E
 
 	adr r1,write0
-	str_ r1,m6502WriteTbl+8
+	str_ r1,rp2A03MemWrite
 
 	adr r1,map19_r
-	str_ r1,m6502ReadTbl+8
+	str_ r1,rp2A03MemRead
 	
 	adr r0,hook
 	str_ r0,scanlineHook
@@ -30,7 +30,7 @@ mapper19init:
 @---------------------------------------------------------------------------------
 write0:
 	cmp addy,#0x4800
-	blo IO_W
+	blo empty_W
 	and r1,addy,#0x7800
 	cmp r1,#0x5000
 	streqb_ r0,counter+2
@@ -47,7 +47,7 @@ write0:
 @---------------------------------------------------------------------------------
 map19_r:
 	cmp addy,#0x4800
-	blo IO_R
+	blo empty_R
 	mov r0, #0
 
 	and r1,addy,#0x7800

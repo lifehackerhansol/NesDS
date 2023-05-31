@@ -9,19 +9,15 @@ mapper111init:
 @---------------------------------------------------------------------------------
 	.word void,void,void,void
 
-	adr r1,mapper111write4000
-	str_ r1,m6502WriteTbl+8
-	adr r1,mapper111write
-	str_ r1,m6502WriteTbl+12
+	adr r0,mapper111write
+	str_ r0,rp2A03MemWrite
+	str_ r0,m6502WriteTbl+12
 
 	bx lr
-
-mapper111write4000:
-        cmp addy,#0x5000
-        bcc IO_W
+@---------------------------------------------------------------------------------
 mapper111write:
 	tst addy,#0x1000
-	bxeq lr
+	beq empty_W
 	stmfd sp!,{r0,lr}
 	bl map89ABCDEF_
 	ldmfd sp,{r0}
@@ -31,3 +27,4 @@ mapper111write:
 	ldmfd sp!,{r0,lr}
 	tst r0,#0x20
 	b mirror1_
+@---------------------------------------------------------------------------------

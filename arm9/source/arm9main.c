@@ -81,6 +81,7 @@ void DS_init() {
 * description:	none
 ******************************/
 void EMU_Init() {
+	cpuInit();
 	PPU_init();
 	rescale(0xe000,-0x00060000);
 	REG_DISPCNT=0x38810000;

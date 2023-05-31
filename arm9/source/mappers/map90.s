@@ -85,9 +85,9 @@ mapper90init:
 	strb r0, sw_val			@for multi-in-one switch.
 
 	adr r1, readl
-	str_ r1,m6502ReadTbl+8
+	str_ r1,rp2A03MemRead
 	adr r1,writel
-	str_ r1,m6502WriteTbl+8
+	str_ r1,rp2A03MemWrite
 
 	ldr r0,=hbhook
 	str_ r0,scanlineHook
@@ -106,7 +106,7 @@ sw_val:
 writel:
 @---------------------------------------------------------------------------------
 	cmp addy,#0x5000
-	blo IO_W
+	blo empty_W
 	ldr r1, =0x5803
 	cmp addy, r1
 	streqb_ r0, key_val
@@ -150,7 +150,7 @@ writel:
 readl:
 @---------------------------------------------------------------------------------
 	cmp addy,#0x5000
-	blo IO_R
+	blo empty_R
 	ldreqb r0, sw_val
 	eoreq r0, r0, #0xFF
 	bxeq lr

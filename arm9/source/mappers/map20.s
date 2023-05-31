@@ -132,9 +132,9 @@ mapper20init:
 	str_ r1, disk_w
 
 	adr r0, exread
-	str_ r0, m6502ReadTbl + 8
+	str_ r0, rp2A03MemRead
 	adr r0, exwrite
-	str_ r0, m6502WriteTbl + 8
+	str_ r0, rp2A03MemWrite
 	ldr r0, =writel
 	str_ r0, m6502WriteTbl + 12
 	ldr r0, =hsync
@@ -149,21 +149,15 @@ mapper20init:
 @-------------------------------
 exread:
 @-------------------------------
-	ldr r1, =0x4020
-	cmp addy, r1
-	bcc IO_R
-
 	mov r0, addy, lsr#8
-	mov r1, addy, lsr#8
-	cmp r1, #0x40
-	bxne lr
+	cmp r0, #0x40
+	bne empty_R
 	and r1, addy, #0xFF
-	cmp r1, #0x34
-	bcs IO_R
 	subs r1, r1, #0x30
-	bxcc lr
-	adr r2, exrtbl
-	ldr pc, [r2, r1, lsl#2]
+	bcc empty_R
+	cmp r1, #4
+	ldrmi pc, [pc, r1, lsl#2]
+	b empty_R
 @--------------------------
 exrtbl:
 	.word r30, r31, r32, r33
@@ -289,21 +283,18 @@ r33:
 @-------------------------------
 exwrite:
 @-------------------------------
-	ldr r1, =0x4020
-	cmp addy, r1
-	bcc IO_W
-	
 	mov r1, addy, lsr#8
 	cmp r1, #0x40
-	bxne lr
+	bne empty_W
 	and r1, addy, #0xFF
-	cmp r1, #0x27
-	bcs IO_W
-	subs r1, r1, #0x20
-	bxcc lr
-
-	adr r2, exwtbl
-	ldr pc, [r2, r1, lsl#2]
+	cmp r1, #0x90
+	bcs empty_W
+	cmp r2, #0x40
+	bcs soundwrite
+	sub r1, r1, #0x20
+	cmp r1, #0x08
+	ldrmi pc, [pc, r1, lsl#2]
+	b empty_W
 exwtbl:
 	.word w20, w21, w22, w23, w24, w25, w26
 

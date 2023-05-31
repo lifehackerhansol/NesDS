@@ -3,9 +3,7 @@
 	#include "M6502.i"
 @---------------------------------------------------------------------------------
 	.global IO_reset
-	.global IO_R
-	.global IO_W
-	.global joypad_write_ptr
+	.global dma_W
 	.global joy0_W
 	.global joyflags
 	.global refreshNESjoypads
@@ -22,68 +20,16 @@
 IO_reset:
 @---------------------------------------------------------------------------------
 	mov r0, #0
-	str r0, af_state			@clear autofire state
+	str r0, af_state			@ Clear autofire state
+
+	ldr r0,=joy0_R				@ $4016: controller 1
+	str_ r0,rp2A03IORead0
+	ldr r0,=joy1_R				@ $4017: controller 2
+	str_ r0,rp2A03IORead1
+	ldr r0,=joy0_W				@ $4016: Joypad 0 write
+	str_ r0,rp2A03IOWrite
 
 	bx lr
-@---------------------------------------------------------------------------------
-IO_R:		@I/O read
-@read a IO register for NES
-@---------------------------------------------------------------------------------
-	sub r2,addy,#0x4000	@minus basic io address 0x4000
-	subs r2,r2,#0x15	
-	bmi empty_R		@no readable io register lower than 0x4015
-	cmp r2,#3
-	ldrmi pc,[pc,r2,lsl#2]	@go (0x4000 + (r2 - 15) * 4)
-	bx lr
-	@b FDS_R
-io_read_tbl:
-	.word _4015r	@4015 (sound)
-	.word joy0_R	@4016: controller 1
-	.word joy1_R	@4017: controller 2
-FDS_R:
-	mov r0, #0
-	bx lr
-@---------------------------------------------------------------------------------
-IO_W:		@I/O write
-@write a IO register for NES
-@---------------------------------------------------------------------------------
-	sub r2,addy,#0x4000
-	cmp r2,#0x18	@no writeable io register greater than 0x4018
-	ldrmi pc,[pc,r2,lsl#2]
-	b FDS_W
-io_write_tbl:
-	.word soundwrite	@pAPU Pulse #1 Control Register 0x4000
-	.word soundwrite	@pAPU Pulse #1 Ramp Control Register 0x4001
-	.word soundwrite	@pAPU Pulse #1 Fine Tune (FT) Register 0x4002
-	.word soundwrite	@pAPU Pulse #1 Coarse Tune (CT) Register 0x4003
-	.word soundwrite	@pAPU Pulse #2 Control Register 0x4004
-	.word soundwrite	@pAPU Pulse #2 Ramp Control Register 0x4005
-	.word soundwrite	@pAPU Pulse #2 Fine Tune Register 0x4006
-	.word soundwrite	@pAPU Pulse #2 Coarse Tune Register 0x4007
-	.word soundwrite	@pAPU Triangle Control Register #1 0x4008
-	.word soundwrite	@pAPU Triangle Control Register #2 0x4009
-	.word soundwrite	@pAPU Triangle Frequency Register #1 0x400a
-	.word soundwrite	@pAPU Triangle Frequency Register #2 0x400b
-	.word soundwrite	@pAPU Noise Control Register #1 0x400c
-	.word soundwrite	@Unused
-	.word soundwrite	@pAPU Noise Frequency Register #1 0x400e
-	.word soundwrite	@pAPU Noise Frequency Register #2 0x400f
-	.word soundwrite	@pAPU Delta Modulation Control Register 0x4010
-	.word soundwrite	@pAPU Delta Modulation D/A Register 0x4011
-	.word soundwrite	@pAPU Delta Modulation Address Register 0x4012
-	.word soundwrite	@pAPU Delta Modulation Data Length Register 0x4013
-	.word dma_W		@$4014: Sprite DMA transfer
-	.word soundwrite
-joypad_write_ptr:
-	.word joy0_W	@$4016: Joypad 0 write
-	.word void		@$4017: ?
-@----
-FDS_W:
-	cmp r2, #0x40
-	bcc empty_W
-	cmp r2, #0x90
-	bcs empty_W
-	b soundwrite
 @---------------------------------------------------------------------------------
 dma_W:	@(4014)		sprite DMA transfer
 @shell we edit?

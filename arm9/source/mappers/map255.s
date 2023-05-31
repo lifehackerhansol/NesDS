@@ -36,9 +36,9 @@ mapper255init:
 	bl mirror2V_
 
 	adr r0, m255RamR
-	str_ r0, m6502ReadTbl+8
+	str_ r0, rp2A03MemRead
 	adr r0, m255RamW
-	str_ r0, m6502WriteTbl+8
+	str_ r0, rp2A03MemWrite
 	ldmfd sp!, {pc}
 
 @-----------------
@@ -81,7 +81,7 @@ w255_32k:
 m255RamR:
 @-----------------
 	tst addy,#0x1800
-	beq IO_R
+	beq empty_R
 	and r1,addy,#3
 	adrl_ r2,ram0
 	ldrb r0,[r2,r1]
@@ -90,7 +90,7 @@ m255RamR:
 m255RamW:
 @-----------------
 	tst addy,#0x1800
-	beq IO_W
+	beq empty_W
 	and r1,addy,#3
 	adrl_ r2,ram0
 	strb r0,[r2,r1]

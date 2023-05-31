@@ -81,6 +81,7 @@ mappertbl:
 	.word 111,mapper111init
 	.word 118,mapper118init
 	.word 119,mapper4init
+	.word 148,mapper148init
 	.word 151,mapper151init
 	.word 152,mapper152init
 	.word 158,mapper64init
@@ -221,10 +222,6 @@ initcart: @called from C:  r0=rom, (r1=emuFlags?)
 	mov r0,#0x7d
 	strb r0,[r1,r2]			@ for "Low G Man".
 
-	ldr r0,=joy0_W
-	ldr r1,=joypad_write_ptr	
-	str r0,[r1]				@ reset 4016 write (mapper99 messes with it)
-
 	ldr r1,=void
 	str_ r1, newFrameHook
 	str_ r1, endFrameHook
@@ -240,8 +237,8 @@ initcart: @called from C:  r0=rom, (r1=emuFlags?)
 	str_ r1,m6502ReadTbl+0
 	ldr r1,=PPU_R
 	str_ r1,m6502ReadTbl+4
-	ldr r1,=IO_R
-	str_ r1,m6502ReadTbl+8
+	ldr r1,=empty_R
+	str_ r1,rp2A03MemRead
 	ldr r1,=mem_R60
 	str_ r1,m6502ReadTbl+12
 	ldr r1,=rom_R80
@@ -259,8 +256,8 @@ initcart: @called from C:  r0=rom, (r1=emuFlags?)
 	str_ r1,m6502WriteTbl+0
 	ldr r1,=PPU_W
 	str_ r1,m6502WriteTbl+4
-	ldr r1,=IO_W
-	str_ r1,m6502WriteTbl+8
+	ldr r1,=empty_W
+	str_ r1,rp2A03MemWrite
 	ldr r1,=sram_W
 	str_ r1,m6502WriteTbl+12
 	ldr r1,=rom_W

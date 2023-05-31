@@ -40,9 +40,6 @@ mapper71init:
 	adr r0,m71irqhook
 	str_ r0,scanlineHook
 
-	adr r1,m71iow
-	str_ r1,m6502WriteTbl+8
-
 	bx lr
 @---------------------------------------------------------------------------------
 mapper180init:
@@ -62,33 +59,11 @@ m71irqhook:
 	cmp r0, #179
 	bxne lr
 
-	ldr r0, irq_pend
-	ands r0, r0, r0
+	ldrb_ r0,rp2A03Control
+	tst r0,#0x10
 	bxeq lr
+	b rp2A03SetDmcIRQ
 
-	mov r0, #0
-	str r0, irq_pend
-	mov r0,#1
-	b rp2A03SetIRQPin
-
-m71iow:
-	and r2, addy, #0xff
-	cmp r2, #0x15
-	bne IO_W
-
-	stmfd sp!,{r0,lr}
-	mov r0,#0
-	bl rp2A03SetIRQPin			;@ Clear IRQ pin on CPU
-	ldmfd sp!,{r0,lr}
-
-	tst r0, #16
-	strne r0, irq_pend
-	bic r0, #16
-	b IO_W
-
-irq_pend:
-	.word 0
-@---------------------------------------
 @---------------------------------------------------------------------------------
 write0:
 @---------------------------------------------------------------------------------

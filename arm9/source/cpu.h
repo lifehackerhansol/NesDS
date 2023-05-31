@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+void cpuInit(void);
 void EMU_Run(void);
 void NSF_Run(void);
 

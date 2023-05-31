@@ -71,7 +71,7 @@ mapper189init:
 	str_ r0,scanlineHook
 
 	adr r0, writel
-	str_ r0, m6502WriteTbl+8
+	str_ r0, rp2A03MemWrite
 	str_ r0, m6502WriteTbl+12
 
 	ldr_ r0, prgcrc
@@ -84,7 +84,7 @@ mapper189init:
 @-------------------------------------------------------------------
 writel:
 	cmp addy, #0x4100
-	bcc IO_W
+	bcc empty_W
 
 	strb_ r0, datar0
 
