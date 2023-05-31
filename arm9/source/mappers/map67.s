@@ -26,7 +26,7 @@ write0:		@8000,8800,9800
 @---------------------------------------------------------------------------------
 	ands addy,addy,#0x1800
 	moveq r0,#0				;@ 8000
-	beq m6502SetIRQPin
+	beq rp2A03SetIRQPin
 	cmp addy,#0x0800		;@ 8800
 	beq chr01_
 	cmp addy,#0x1800		;@ 9800
@@ -81,5 +81,5 @@ map67_IRQ_Hook:
 	strb_ r1,irqen
 	mov r0,r0,lsr#16
 	str_ r0,countdown
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 @---------------------------------------------------------------------------------

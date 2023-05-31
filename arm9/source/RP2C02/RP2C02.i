@@ -59,6 +59,8 @@ _m_ endFrameHook,4
 _m_ hblankHook,4
 _m_ ppuChrLatch,4
 
+_m_ ppuOAMMem, 64*4
+
 _m_ ppuIrqFunc,4
 
 rp2C02Size:

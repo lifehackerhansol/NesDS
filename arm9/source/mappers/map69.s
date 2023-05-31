@@ -51,7 +51,7 @@ write1:		@$A000
 irqen69:
 	strb_ r0,irqen
 	mov r0,#0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 irqA69:
 	strb_ r0,countdown
 	bx lr
@@ -86,7 +86,7 @@ hook:
 	str_ r0,countdown
 
 	ands r0,r2,#0x01			@ IRQ enable?
-	bne m6502SetIRQPin
+	bne rp2A03SetIRQPin
 	bx lr
 @---------------------------------------------------------------------------------
 commandlist:	.word mapJinx,map89_,mapAB_,mapCD_,mirrorKonami_,irqen69,irqA69,irqB69

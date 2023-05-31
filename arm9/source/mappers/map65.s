@@ -48,12 +48,12 @@ w93:
 	and r0,r0,#0x80
 	strb_ r0,irqen
 	mov r0,#0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 w94:
 	ldr_ r2,latch
 	str_ r2,counter
 	mov r0,#0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 w95:
 	strb_ r0,latch+1
 	bx lr
@@ -91,7 +91,7 @@ hook:
 	strb_ r0,irqen
 	str_ r0,counter		@ clear counter and IRQenable.
 	mov r0,#1
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 h0:
 	str_ r0,counter
 	bx lr

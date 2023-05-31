@@ -43,14 +43,14 @@ KoIRQEnable: @- - - - - - - - - - - - - - -
 	ldrneb_ r0,latch
 	strneb_ r0,counter
 	mov r0, #0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 KoIRQack: @- - - - - - - - - - - - - - -
 	ldrb_ r0,irqen
 	bic r0,r0,#2		;@ Disable Timer
 	orr r0,r0,r0,lsl#1	;@ Move repeat bit to Enable bit
 	strb_ r0,irqen
 	mov r0, #0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 @---------------------------------------------------------------------------------
 Konami_IRQ_Hook:
 @---------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ Konami_IRQ_Hook:
 
 	strb_ r0,counter	;@ Copy latch to counter
 	mov r0, #1
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 h0:
 	str_ r0,latch
 	bx lr

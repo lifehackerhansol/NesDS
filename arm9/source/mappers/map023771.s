@@ -69,7 +69,7 @@ m71irqhook:
 	mov r0, #0
 	str r0, irq_pend
 	mov r0,#1
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 
 m71iow:
 	and r2, addy, #0xff
@@ -78,7 +78,7 @@ m71iow:
 
 	stmfd sp!,{r0,lr}
 	mov r0,#0
-	bl m6502SetIRQPin			;@ Clear IRQ pin on CPU
+	bl rp2A03SetIRQPin			;@ Clear IRQ pin on CPU
 	ldmfd sp!,{r0,lr}
 
 	tst r0, #16

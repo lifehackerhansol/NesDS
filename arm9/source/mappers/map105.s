@@ -113,7 +113,7 @@ w1:	strb_ r1,latch
 
 	stmfd sp!, {r0,lr}
 	mov r0,#1
-	blne m6502SetIRQPin
+	blne rp2A03SetIRQPin
 	ldmfd sp!, {r0,lr}
 
 	b romswitch
@@ -175,5 +175,5 @@ hook:
 	bxlo lr
 
 	mov r0,#1
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 @---------------------------------------------------------------------------------

@@ -275,7 +275,7 @@ mmc3IrqEnableW:		@ E000-FFFF
 @------------------------------------
 	ands r0, addy, #1
 	strb_ r0, irq_enable
-	beq m6502SetIRQPin
+	beq rp2A03SetIRQPin
 	bx lr
 
 @-------------------------------------------------------------------
@@ -303,7 +303,7 @@ mmc3HSync:			@ Sharp version, IRQ as long as counter is 0
 	ldrb_ r0, irq_enable
 	cmp r0,#0
 	bxeq lr
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 @-------------------------------------------------------------------
 mmc3HSyncAlt:		@ NEC version, IRQ only on counter n->0 transition
 @-------------------------------------------------------------------
@@ -331,7 +331,7 @@ mmc3HSyncAlt:		@ NEC version, IRQ only on counter n->0 transition
 	ldrb_ r0, irq_enable
 	cmp r0,#0
 	bxeq lr
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 @-------------------------------------------------------------------
 hSyncRAMBO1:
 @-------------------------------------------------------------------
@@ -362,5 +362,5 @@ hSyncRAMBO1:
 	strb_ r2, irq_counter
 0:
 	ldrb_ r0, irq_request
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 @--------

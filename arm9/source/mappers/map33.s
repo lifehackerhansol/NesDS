@@ -52,7 +52,7 @@ writeC000:						@ Only mapper 48
 	mov r0,addy
 	movhi r0,#0
 	strplb_ r0,irqen
-	bhi m6502SetIRQPin
+	bhi rp2A03SetIRQPin
 	ldrmib_ r0,latch
 	strmib_ r0,counter
 	bx lr
@@ -87,7 +87,7 @@ hook:
 
 	strb_ r0,counter	@copy latch to counter
 	mov r0,#1
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 h0:
 	str_ r0,latch
 	bx lr

@@ -960,7 +960,7 @@ oamAddr_W:		@(2003)
 ppuOamDataR:	@(2004)
 @---------------------------------------------------------------------------------
 	ldrb_ r1,ppuOamAdr
-	ldr r2,=NES_SPRAM
+	adrl_ r2,ppuOAMMem
 	ldrb r0,[r2,r1]
 //	bic r0,r0,#0x1C			;@ Actualy only when reading attribute (2).
 	strb_ r0,ppuBusLatch
@@ -969,7 +969,7 @@ ppuOamDataR:	@(2004)
 ppuOamDataW:	@(2004)
 @---------------------------------------------------------------------------------
 	ldrb_ r1,ppuOamAdr
-	ldr r2,=NES_SPRAM
+	adrl_ r2,ppuOAMMem
 	strb r0,[r2,r1]
 	add r1,r1,#1
 	strb_ r1,ppuOamAdr
@@ -1764,7 +1764,7 @@ spchr_update:
 	@r5  = ppu_decode
 	@r4  = pdatabase
 
-	ldr r9, =NES_SPRAM		@r9 = sp
+	adrl_ r9,ppuOAMMem		@r9 = sp
 
 	ldr_ r3, scanline
 	cmp r3, #0
@@ -1817,7 +1817,7 @@ msplp:
 	bxeq lr
 
 hidesp:
-	ldr r3, =NES_SPRAM
+	adrl_ r3,ppuOAMMem
 	ldr r2, =0x7000008
 	mov r4, #0x200
 	mov r1, #64

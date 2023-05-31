@@ -48,17 +48,17 @@ _ff:
 _1:
 	mov r0,#0
 	strb_ r0,enable
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 _2:
 	strb_ r0,counter+2
 	mov r0,#0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 _3:
 	strb_ r0,counter+3
 	mov r1,#1
 	strb_ r1,enable
 	mov r0,#0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 @---------------------------------------------------------------------------------
 hook:
 @---------------------------------------------------------------------------------
@@ -71,5 +71,5 @@ hook:
 	str_ r0,counter
 	bxcc lr
 	mov r0,#1
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 @---------------------------------------------------------------------------------

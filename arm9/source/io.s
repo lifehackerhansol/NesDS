@@ -90,7 +90,7 @@ dma_W:	@(4014)		sprite DMA transfer
 @---------------------------------------------------------------------------------
 PRIORITY = 0x000	@0x800=AGB OBJ priority 2/3
 
-	ldr r1,=512*3*CYCLE		@ was 512...	514 is the right number...
+	ldr r1,=513*3*CYCLE		@ was 512...	514 is the right number...
 	sub cycles,cycles,r1
 	stmfd sp!,{r3-r8,lr}
 
@@ -101,7 +101,7 @@ PRIORITY = 0x000	@0x800=AGB OBJ priority 2/3
 	add addy,addy,r0,lsl#8	@addy=DMA source
 
 	mov r0, addy
-	ldr r1, =NES_SPRAM
+	adrl_ r1,ppuOAMMem
 	mov r7, #240/5/4
 cpsp:
 	ldmia r0!, {r2-r6}
@@ -113,9 +113,8 @@ cpsp:
 
 	ldr_ r0, emuFlags
 	tst r0, #0x40 + SOFTRENDER		@sprite render type or pure software
-	beq 0f
-	ldmfd sp!,{r3-r8,pc}
-0:
+	ldmnefd sp!,{r3-r8,pc}
+
 	ldr_ r0,emuFlags  		@r7,8=priority flags for scaling type
 	tst r0,#ALPHALERP
 	moveq r7,#0x00200000

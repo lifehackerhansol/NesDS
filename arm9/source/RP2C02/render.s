@@ -173,7 +173,7 @@ dummy_render:
 	stmfd sp!, {r3-r6}
 	mov r3, #0
 	mov r6, #0
-	ldr r4, =NES_SPRAM
+	adrl_ r4,ppuOAMMem
 	ldrb_ r5, scanline
 	sub r5, r5, #1
 
@@ -217,7 +217,7 @@ sp_render:
 
 	mov r12, #0			@spmax = 0
 					@r11 = spraddr, r9 = sp_y, r8 = sp_h, r7 = chr_h, r6 = chr_l, r5 = sp, r4 = i
-	ldr r5, =NES_SPRAM		@r5 = sp
+	adrl_ r5,ppuOAMMem		@r5 = sp
 	ldrb_ r1, ppuCtrl0
 	tst r1, #0x20
 	movne r8, #15			@r8 = sp_h = (PPUREG[0]&PPU_SP16_BIT)?15:7

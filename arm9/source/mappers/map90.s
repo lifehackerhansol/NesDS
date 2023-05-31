@@ -225,12 +225,12 @@ ctable:
 wc000:
 	ands r0,r0,#1
 	strb_ r0, irq_enable
-	beq m6502SetIRQPin
+	beq rp2A03SetIRQPin
 	bx lr
 wc002:
 	mov r0, #0
 	strb_ r0, irq_enable				@this instruction does not work well...
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 wc003:
 	mov r0, #0xFF
 	strb_ r0, irq_enable
@@ -470,5 +470,5 @@ hbhook:
 
 	ldrb_ r0, irq_enable
 	ands r0, r0, r0
-	bne m6502SetIRQPin
+	bne rp2A03SetIRQPin
 	bx lr

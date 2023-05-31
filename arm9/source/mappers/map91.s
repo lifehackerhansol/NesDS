@@ -60,7 +60,7 @@ addhi:
 	moveq r0,#0
 	movne r0,#1
 	strb_ r0,irqEnable
-	beq m6502SetIRQPin
+	beq rp2A03SetIRQPin
 	bx lr
 
 @---------------------------------------------------------------------------------
@@ -72,4 +72,4 @@ hsync:
 	ands r0, r0, #7
 	bxne lr
 	mov r0,#1
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin

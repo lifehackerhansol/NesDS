@@ -58,14 +58,14 @@ writeC000:
 	ldrne_ r0,latch
 	strne_ r0,counter
 	mov r0, #0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 writeD000:				;@ irqAck
 	ldrb_ r0,irqen
 	bic r0,r0,#2		;@ Disable Timer
 	orr r0,r0,r0,lsl#1	;@ Move repeat bit to Enable bit
 	strb_ r0,irqen
 	mov r0, #0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 @---------------------------------------------------------------------------------
 writeE000:
 @---------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ takeIrq:
 	ldr_ r0,latch
 	str_ r0,counter
 	mov r0, #1
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 timer8bit:
 	mov r2,r2,ror#24
 	adds r2,r2,r1,lsl#8

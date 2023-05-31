@@ -35,7 +35,7 @@ write0:
 	cmp r1,#0x5000
 	streqb_ r0,counter+2
 	moveq r0,#0
-	beq m6502SetIRQPin
+	beq rp2A03SetIRQPin
 
 	cmp r1,#0x5800
 	bxne lr
@@ -43,7 +43,7 @@ write0:
 	and r0,r0,#0x80
 	strb_ r0,enable
 	mov r0,#0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 @---------------------------------------------------------------------------------
 map19_r:
 	cmp addy,#0x4800
@@ -140,4 +140,4 @@ hook:
 	strb_ r0,enable
 	sub r0,r0,#0x10000
 	str_ r0,counter
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin

@@ -327,7 +327,7 @@ setEnIrq:
 	strb_ r0,enable
 	ldrb_ r1,mmc5irqr
 	and r0,r0,r1
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 @---------------------------------------------------------------------------------
 mmc5_c00w:
 	@dup write, no need
@@ -365,7 +365,7 @@ mmc5_r:		@5204,5205,5206
 MMC5IRQR:
 	stmfd sp!,{lr}
 	mov r0,#0
-	bl m6502SetIRQPin
+	bl rp2A03SetIRQPin
 	ldmfd sp!,{lr}
 	ldrb_ r0,mmc5irqr
 	and r1,r0,#0x40
@@ -405,12 +405,12 @@ hook:
 
 	ldrb_ r2,enable
 	ands r0,r0,r2
-	bne m6502SetIRQPin
+	bne rp2A03SetIRQPin
 	bx lr
 h1:
 	strb_ r0,mmc5irqr
 	ldrb_ r1,enable
 	ands r0,r0,r1
-	beq m6502SetIRQPin
+	beq rp2A03SetIRQPin
 	bx lr
 @---------------------------------------------------------------------------------

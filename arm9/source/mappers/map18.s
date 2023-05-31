@@ -87,11 +87,11 @@ wE3: @- - - - - - - - - - - - - - -
 wF0: @- - - - - - - - - - - - - - -
 	str_ r2,counter
 	mov r0,#0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 wF1: @- - - - - - - - - - - - - - -
 	strb_ r0,irqen
 	mov r0,#0
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 wF2: @- - - - - - - - - - - - - - -
 	movs r1,r0,lsr#2
 	tst r0,#1
@@ -116,7 +116,7 @@ hook:
 	str_ r0,counter	@clear counter and IRQenable.
 	strb_ r0,irqen
 	mov r0,#1
-	b m6502SetIRQPin
+	b rp2A03SetIRQPin
 h0:
 	str_ r0,counter
 	bx lr

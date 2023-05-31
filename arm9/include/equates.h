@@ -45,8 +45,7 @@ NES_SRAM		= NES_RAM+0x0800	@***!!! also in c_defs.h
 NES_VRAM		= NES_SRAM+0x2000
 NES_XRAM		= NES_VRAM+0x3000
 CHR_DECODE		= NES_XRAM+0x2000
-MAPPED_RGB		= CHR_DECODE+0x400
-NES_SPRAM		= MAPPED_RGB+0x100	@mapped NES palette (for VS unisys)
+MAPPED_RGB		= CHR_DECODE+0x400	@mapped NES palette (for VS unisys)
 @?			EQU MAPPED_RGB+64*3
 
 NDS_VRAM		= 0x6000000
