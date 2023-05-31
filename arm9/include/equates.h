@@ -1,7 +1,7 @@
 @		GBLL DEBUG
 @	VERSION_IN_ROM = 0  @out of pocketnes ??
 	#include "macro.h"
-	#include "M6502.i"
+	#include "RP2A03.i"
 	#include "RP2C02.i"
 DEBUG		= 1
 DEBUGSTEP	= 0
@@ -97,7 +97,7 @@ REG_BLDALPHA		= 0x52
 globalptr	.req r10	@ =wram_globals* ptr
 
 start_map 0,globalptr	@6502.s
-_m_ m6502struct,m6502Size
+_m_ rp2A03struct,rp2A03Size
 _m_ rp2C02struct,rp2C02Size
 _m_ mapperData,96
 
