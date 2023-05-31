@@ -4,7 +4,7 @@ addy		.req r12		;@ Keep this at r12 (scratch for APCS)
 
 NDS_PALETTE		= 0x5000000
 
-start_map m6502Size,globalptr	@6502.s
+start_map rp2A03Size,globalptr	@RP2A03.s
 
 @ppuState:
 	@RP2C02.s
@@ -38,6 +38,7 @@ _m_ ppuStat,1
 _m_ ppuOamAdr,1
 _m_ ppuCtrl0Frame,1
 _m_ unused_align,3
+_m_ padding, 12
 _m_ nesChrMap,16
 
 _m_ loopy_t,4

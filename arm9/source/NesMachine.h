@@ -5,12 +5,12 @@
 extern "C" {
 #endif
 
-#include "M6502.h"
+#include "RP2A03.h"
 #include "RP2C02.h"
 
 typedef struct {
-	M6502Core cpu;
-	PPUCore ppu;
+	RP2A03 cpu;
+	RP2C02 ppu;
 	u8 mapperData[96];
 
 	u32 *romBase;
@@ -30,7 +30,7 @@ typedef struct {
 	u8 padding[3];
 } NESCore;
 
-extern M6502Core m6502Base;
+extern RP2A03 rp2A03;
 extern NESCore globals;
 
 #ifdef __cplusplus

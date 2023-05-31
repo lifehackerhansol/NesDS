@@ -93,7 +93,7 @@ int debugdump() {
 
 		
 		for(i = 0; i < 4; i++) {
-			hex32(64 * 20 + i * 32, (u32)m6502Base.memTbl[i + 4] + 0x2000 * i + 0x8000);
+			hex32(64 * 20 + i * 32, (u32)rp2A03.m6502.memTbl[i + 4] + 0x2000 * i + 0x8000);
 		}
 	} else if(debuginfo[MAPPER] == 20) {
 		u8 *p=(u8*)&globals.mapperData;//0x7000000;
@@ -117,7 +117,7 @@ int debugdump() {
 			hex(64 * 15 + i * 8, globals.ppu.nesChrMap[i], 2);
 		}
 		for(i = 0; i < 4; i++) {
-			hex(64 * 16 + i * 8, ((char *)m6502Base.memTbl[i + 4] - (char *)globals.romBase)/0x2000 + i + 4, 2);
+			hex(64 * 16 + i * 8, ((char *)rp2A03.m6502.memTbl[i + 4] - (char *)globals.romBase)/0x2000 + i + 4, 2);
 		}
 #endif
 #if 1

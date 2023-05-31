@@ -16,7 +16,7 @@
 	.global loadstate
 	.global _ck
 	.global globals
-	.global m6502Base
+	.global rp2A03
 @---------------------------------------------------------------------------------
 .section .text,"ax"
 @---------------------------------------------------------------------------------
@@ -590,5 +590,5 @@ map89ABCDEF_:
 .section .dtcm, "aw"
 globals:
 nesMachine:
-m6502Base:
+rp2A03:
 	.skip nesMachineSize

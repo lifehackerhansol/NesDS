@@ -171,7 +171,7 @@ CPU_reset:	@ Called by loadcart (r0-r9 are free to use)
 @---------------------------------------------------------------------------------
 	stmfd sp!,{lr}
 
-	ldr r0,=m6502Base
+	ldr r0,=rp2A03
 	bl m6502Init
 
 	bl m6502Reset
