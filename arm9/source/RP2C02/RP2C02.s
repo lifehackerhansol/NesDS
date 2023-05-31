@@ -541,9 +541,12 @@ scaleTable2: .skip 256
 PAL60: 			.byte 0
 				.align
 @---------------------------------------------------------------------------------
-ppusync:		@called on NES scanline 0..239 (r0=line)
+ppusync:		@ Called on NES scanline 0..239 (r0=line)
 @---------------------------------------------------------------------------------
 	stmfd sp!,{r3,lr}
+
+//	mov r0,#0
+//	strb_ r0,ppuOamAdr
 
 	ldr_ r0, emuFlags
 	tst r0, #SOFTRENDER
@@ -1230,6 +1233,8 @@ newframe:	@ Called at NES scanline 0
 	strb_ r0,ppuStat			@ vbl, sprite0 & sprite ovr clear
 	bl updateINTPin
 
+	bl renderSprites
+
 	ldr_ r0, loopy_t
 	str_ r0, loopy_v
 	mov r0, r0, lsr#12
@@ -1748,7 +1753,207 @@ cached: @--------------
 	str r7,currentBG
 	bx lr
 
+	.pool
+@---------------------------------------------------------------------------------
+renderSprites:
+@---------------------------------------------------------------------------------
+PRIORITY = 0x000	@0x800=AGB OBJ priority 2/3
 
+	ldr_ r0, emuFlags
+	tst r0, #0x40 + SOFTRENDER		@sprite render type or pure software
+	bxne lr
+	stmfd sp!,{r3-r9,lr}
+
+	adrl_ addy,ppuOAMMem
+	ldr_ r0,emuFlags  		@r7,8=priority flags for scaling type
+	tst r0,#ALPHALERP
+	moveq r7,#0x00200000
+	movne r7,#0
+	eor r8,r7,#0x00200000
+
+	mov r9,#64				@ Number of sprites.
+	ldr r2,=NDS_OAM
+	adr r5,spriteY_lookup
+
+	ldr r0, =ad_scale
+	ldr r0, [r0]
+	and r0, r0, #0x1F000
+	cmp r0, #(0x14 << 12)
+	addcc r5, r5, #1
+	add r5, r5, #1
+
+	ldrb_ r0,ppuCtrl0Frame	@8x16?
+	tst r0,#0x20
+	bne dm4
+@- - - - - - - - - - - - - 8x8 size
+							@get sprite0 hit pos:
+	tst r0,#0x08			@CHR base? (0000/1000)
+	moveq r4,#0+PRIORITY	@r4=CHR set+AGB priority
+	movne r4,#0x100+PRIORITY
+	ldrb r0,[addy,#1]		@sprite tile#
+	ldr r1,=NDS_OBJVRAM
+	addne r1,r1,#0x2000
+	add r0,r1,r0,lsl#5		@r0=VRAM base+tile*32
+	ldr r1,[r0]				@I dont really give a shit about Y flipping at the moment
+	cmp r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	and r0,r0,#31
+	ldrb r1,[addy]			@r1=sprite0 Y
+	add r1,r1,#1
+	add r1,r1,r0,lsr#2
+@	moveq r1,#512			@blank tile=no hit
+	cmp r1,#239
+	movhi r1,#512			@no hit if Y>239
+	str_ r1,sprite0Y
+@	ldrb r1,[addy,#3]		@r1=sprite0 x
+@	strb r1,sprite0X
+
+dm11:
+	ldr r3,[addy],#4
+	and r0,r3,#0xff
+	cmp r0,#239
+	bhi dm10			@skip if sprite Y>239
+	ldrb r0,[r5,r0]			@r0=scaled y
+
+	mov r1,r3,lsr#24
+	orr r0,r0,r1,lsl#16	@sprite x
+
+	and r1,r3,#0x00c00000	@flip
+	orr r0,r0,r1,lsl#6
+
+	and r1,r3,r7		@priority
+	orr r0,r0,r1,lsr#11		@Set Transp OBJ. (for non-alpha)
+
+	str r0,[r2],#4			@store OBJ Atr 0,1
+
+	and r1,r3,#0x0000ff00		@tile#
+	and r0,r3,#0x00030000		@color
+	orr r0,r1,r0,lsl#4
+	orr r0,r4,r0,lsr#8		@tileset
+
+	tst r3,r8
+	orrne r0,r0,#0x0400		@priority (for alpha)
+
+	strh r0,[r2],#4			@store OBJ Atr 2
+dm9:
+	subs r9,r9,#1
+	bne dm11
+	mov r0, #0x200
+	str r0, [r2]			@hide the sprite 65 of NDS, which was used by per-line type
+	ldmfd sp!,{r3-r9,pc}
+dm10:
+	mov r0,#0x2a0			@double, y=160
+	str r0,[r2],#8
+	b dm9
+
+dm4:	@- - - - - - - - - - - - - 8x16 size
+				@check sprite hit:
+	ldrb r0,[addy,#1]		@sprite tile#
+	movs r0,r0,lsr#1
+	orrcs r0,r0,#0x80
+	ldr r1,=NDS_OBJVRAM
+	add r0,r1,r0,lsl#6
+	ldr r1,[r0]
+	cmp r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	ldreq r1,[r0,#4]!
+	cmpeq r1,#0
+	and r0,r0,#63
+	ldrb r1,[addy]			@r1=sprite0 Y
+	add r1,r1,#1
+	add r1,r1,r0,lsr#2
+@	moveq r1,#512			@blank tile=no hit
+	cmp r1,#239
+	movhi r1,#512			@no hit if Y>239
+	str_ r1,sprite0Y
+@	ldrb r1,[addy,#3]		@r1=sprite0 x
+@	strb r1,sprite0X
+
+	mov r4,#PRIORITY
+dm12:
+	ldr r3,[addy],#4
+	and r0,r3,#0xff
+	cmp r0,#239
+	bhi dm13				@skip if sprite Y>239
+	ldrb r0,[r5,r0]				@r0=scaled y
+
+	mov r1,r3,lsr#24
+	orr r0,r0,r1,lsl#16	@sprite x
+
+	and r1,r3,#0x00c00000	@flip
+	orr r0,r0,r1,lsl#6
+
+	and r1,r3,r7		@priority
+	orr r0,r0,r1,lsr#11		@Set Transp OBJ. (for non-alpha)
+
+	orr r0,r0,#0x8000		@8x16
+	str r0,[r2],#4			@store OBJ Atr 0,1
+
+	and r1,r3,#0x0000ff00	@tile#
+	movs r0,r1,lsr#9
+	orrcs r0,r0,#0x80
+	orr r0,r4,r0,lsl#1		@priority, tile#*2
+	and r1,r3,#0x00030000	@color
+	orr r0,r0,r1,lsr#4
+
+	tst r3,r8
+	orrne r0,r0,#0x0400		@priority (for alpha)
+
+	strh r0,[r2],#4			@store OBJ Atr 2
+dm14:
+	subs r9,r9,#1
+	bne dm12
+	mov r0, #0x200
+	str r0, [r2]			@hide the sprite 65 of NDS, which was used by per-line type
+	ldmfd sp!,{r3-r9,pc}
+dm13:
+	mov r0,#0x2a0			@double, y=160
+	str r0,[r2],#8
+	b dm14
+
+	.pool
+spriteY_lookup: .skip 512
+spriteY_lookup2: .skip 512
 @---------------------------------------------------------------------------------
 spMask:
 	.skip 256 * 4
