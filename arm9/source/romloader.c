@@ -517,9 +517,9 @@ int bootext() {
 	chdir(inibuf); //might be overwritten in readFrontend()
 
 	// if we didn't have an ini, this'll be blank
-	if (disksyspath[0] == 0)
+	if (disksyspath[0] == 0) {
 		strcpy(disksyspath, defaultDisksyspath);
-
+	}
 	FILE* bios = fopen(disksyspath, "r");
 	if (bios != NULL) {
 		fseek(bios, 0, SEEK_END);

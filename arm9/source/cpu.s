@@ -8,7 +8,6 @@
 	.global EMU_Run
 	.global CPU_reset
 	.global pcm_scanlineHook
-	.global ntsc_pal_reset
 
 pcmirqbakup = mapperData+24
 pcmirqcount = mapperData+28
@@ -168,31 +167,12 @@ pcm_scanlineHook:
 	bx lr
 
 @---------------------------------------------------------------------------------
-ntsc_pal_reset:
-@---------------------------------------------------------------------------------
-@---NTSC/PAL
-	mov r2, globalptr
-	ldr globalptr,=globals
-
-	ldr_ r1,emuFlags
-	tst r1,#PALTIMING
-
-	ldreq r1,=341			@NTSC		(113+2/3)*3
-	ldrne r1,=320			@PAL		(106+9/16)*3
-	str_ r1,cyclesPerScanline
-	mov globalptr, r2
-
-	bx lr
-@---------------------------------------------------------------------------------
 CPU_reset:	@ Called by loadcart (r0-r9 are free to use)
 @---------------------------------------------------------------------------------
 	stmfd sp!,{lr}
 
 	ldr r0,=m6502Base
 	bl m6502Init
-
-@---NTSC/PAL
-	bl ntsc_pal_reset
 
 	bl m6502Reset
 

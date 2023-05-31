@@ -3273,7 +3273,7 @@ unsigned int romdb[] = {
 };
 unsigned int crctable[256];
 
-unsigned int romcrc(unsigned char * c, int size)
+unsigned int romcrc(const unsigned char *c, int size)
 {
 	unsigned int r = 0xFFFFFFFFUL;
 	while( --size >= 0 ) {

@@ -57,6 +57,7 @@ typedef struct {
 	u32 endFrameHook;
 	u32 hblankHook;
 	u32 ppuChrLatch;
+	void *ppuIrqFunc;
 } PPUCore;
 
 #ifdef __cplusplus

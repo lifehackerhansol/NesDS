@@ -12,6 +12,7 @@
 	.global ppuOamDataW
 	.global updateINTPin
 	.global ppuDoScanline
+	.global ntsc_pal_reset
 	.global agb_nt_map
 	.global vram_map
 	.global vram_write_tbl
@@ -383,13 +384,7 @@ PPU_reset:
 @---------------------------------------------------------------------------------
 	stmfd sp!,{lr}
 
-	ldr_ r1,emuFlags
-	tst r1,#PALTIMING
-
-	ldreq r0,=261			@NTSC
-	ldrne r0,=311			@PAL
-	str_ r0,lastScanline
-	str r0,ppuTotalLines
+	bl ntsc_pal_reset
 
 	ldr r2,=PPULineStateTable
 	ldr r1,[r2],#4
@@ -426,6 +421,26 @@ PPU_reset:
 	bl renderInit
 
 	ldmfd sp!,{pc}
+@---------------------------------------------------------------------------------
+ntsc_pal_reset:
+@---------------------------------------------------------------------------------
+@---NTSC/PAL
+	mov r1, globalptr
+	ldr globalptr,=globals
+
+	ldr_ r0,emuFlags
+	tst r0,#PALTIMING
+
+	ldreq r0,=341			@NTSC		(113+2/3)*3
+	ldrne r0,=320			@PAL		(106+9/16)*3
+	str_ r0,cyclesPerScanline
+	ldreq r0,=261			@NTSC
+	ldrne r0,=311			@PAL
+	str_ r0,lastScanline
+	str r0,ppuTotalLines
+
+	mov globalptr, r1
+	bx lr
 @---------------------------------------------------------------------------------
 EMU_VBlank:	@call every vblank
 @---------------------------------------------------------------------------------
