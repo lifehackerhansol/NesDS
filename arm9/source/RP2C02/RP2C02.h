@@ -35,9 +35,7 @@ typedef struct {
 	u8 ppuOamAdr;
 	u8 ppuCtrl0Frame;
 	u8 unused_align[3];
-#if !defined DEBUG
 	u8 unusedAlign2[8];
-#endif
 	u16 nesChrMap[8];
 
 	u32 loopy_t;

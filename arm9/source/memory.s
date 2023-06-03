@@ -143,6 +143,7 @@ filler: @r0=data r1=dest r2=word count
 
 @----------------------------------
 @all below is for memory pre-alloc.
+.pool
 
 .section .bss, "aw"
 .align 4

@@ -38,7 +38,7 @@ _m_ ppuStat,1
 _m_ ppuOamAdr,1
 _m_ ppuCtrl0Frame,1
 _m_ unused_align,3
-_m_ padding, 12
+_m_ padding, 8
 _m_ nesChrMap,16
 
 _m_ loopy_t,4

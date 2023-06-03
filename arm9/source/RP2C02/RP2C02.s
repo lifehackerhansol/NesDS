@@ -1077,7 +1077,7 @@ vmdata_R:	@(2007)
 
 	ldrb r1,[r1,r0]
 	ldrb_ r0,readTemp
-	str_ r1,readTemp
+	strb_ r1,readTemp
 	strb_ r0,ppuBusLatch
 	bx lr
 palRead:

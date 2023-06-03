@@ -1,6 +1,5 @@
 @---------------------------------------------------------------------------------
 	#include "equates.h"
-	#include "M6502.i"
 @---------------------------------------------------------------------------------
 	.global IO_reset
 	.global joy0_W
@@ -8,7 +7,6 @@
 	.global refreshNESjoypads
 	.global joystate
 	.global nifi_keys
-	.global ad_scale
 	.global __af_state
 	.global __af_start
 @---------------------------------------------------------------------------------
