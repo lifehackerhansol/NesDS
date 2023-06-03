@@ -434,8 +434,8 @@ ntsc_pal_reset:
 	ldreq r0,=341			@NTSC		(113+2/3)*3
 	ldrne r0,=320			@PAL		(106+9/16)*3
 	str_ r0,cyclesPerScanline
-	ldreq r0,=261			@NTSC
-	ldrne r0,=311			@PAL
+	ldreq r0,=262			@NTSC
+	ldrne r0,=312			@PAL
 	str_ r0,lastScanline
 	str r0,ppuTotalLines
 
@@ -740,8 +740,8 @@ DMAlinestart: .word 0
 PPULineStateTable:
 	.long 0, newframe			;@ ppuZeroLine
 	.long 119, midFrame			;@ ppuMidScanline
-	.long 240, line240			;@ Last visible scanline
-	.long 240, line240NMI		;@ frameIRQ on
+	.long 241, line241			;@ Last visible scanline
+	.long 241, line241NMI		;@ frameIRQ on
 ppuTotalLines:
 	.long 262, frameEndHook		;@ totalScanlines
 ;@----------------------------------------------------------------------------
@@ -773,7 +773,7 @@ continueScanline:
 	ldr_ pc,scanlineHook
 
 	ldr_ r0,scanline
-	subs r0,r0,#241				;@ Return from emulation loop on this scanline
+	subs r0,r0,#240				;@ Return from emulation loop on this scanline
 	ldrne_ r0,cyclesPerScanline
 	ldmfd sp!,{pc}
 
@@ -784,7 +784,7 @@ midFrame:
 	bx lr
 
 @---------------------------------------------------------------------------------
-line240:
+line241:
 NMIDELAY = 2
 
 	ldrb_ r1,ppuStat
@@ -794,7 +794,7 @@ NMIDELAY = 2
 	mov r0,#NMIDELAY*3	@ NMI is delayed a few cycles..
 	ldmfd sp!,{pc}		@ Break early
 @---------------------------------------------------------------------------------
-line240NMI:
+line241NMI:
 	ldr_ r0,frame
 	add r0,r0,#1
 	str_ r0,frame
@@ -938,7 +938,7 @@ stat_R:		@(2002)
 	cmp r1,r0
 @	ble noSprH
 @	ldrb r0,sprite0X			@ for extra high resolution sprite0 hit
-@	ldr r1,cyclesPerScanline	@ the store is in IO.s
+@	ldr_ r1,cyclesPerScanline	@ the store is in IO.s
 @	sub r1,r1,cycles
 @	cmp r1,r0
 	orrhi r2,r2,#0x40

@@ -8,7 +8,6 @@
 	.global EMU_Run
 	.global cpuInit
 	.global CPU_reset
-	.global pcm_scanlineHook
 
 pcmirqbakup = mapperData+24
 pcmirqcount = mapperData+28
@@ -138,34 +137,6 @@ nesFrameLoop:
 	bl updatesound
 
 	ldmfd sp!,{r4-r11,pc}
-
-@---------------------------------------------------------------------------------
-pcm_scanlineHook:
-@---------------------------------------------------------------------------------
-	@ldr addy,=pcmctrl
-	@ldr r2,[addy]
-	@tst r2,#0x1000			@ Is PCM on?
-	@bxeq lr
-	bx lr
-
-	ldr_ r0,pcmirqcount
-@	ldr_ r1,cyclesPerScanline
-@	subs r0,r0,r1,lsr#4
-	subs r0,r0,#121			@ Fire Hawk=122
-	str_ r0,pcmirqcount
-	bxpl lr
-
-	tst r2,#0x40			@ Is PCM loop on?
-	ldrne_ r0,pcmirqbakup
-	strne_ r0,pcmirqcount
-	bxne lr
-	tst r2,#0x80			@ Is PCM IRQ on?
-	orrne r2,r2,#0x8000		@ set pcm IRQ bit in R4015
-	bic r2,r2,#0x1000		@ clear channel 5
-	str r2,[addy]
-	bne m6502SetIRQPin
-
-	bx lr
 
 @---------------------------------------------------------------------------------
 cpuInit:

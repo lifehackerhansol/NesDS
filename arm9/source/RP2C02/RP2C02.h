@@ -17,6 +17,7 @@ typedef struct {
 	u32 fpsValue;
 	u32 adjustBlend;
 
+// PPU State
 	u32 vramAddr;
 	u32 vramAddr2;
 	u32 scrollX;
@@ -34,7 +35,7 @@ typedef struct {
 	u8 ppuStat;
 	u8 ppuOamAdr;
 	u8 ppuCtrl0Frame;
-	u8 unused_align[3];
+	u8 unusedAlign[3];
 	u8 unusedAlign2[8];
 	u16 nesChrMap[8];
 

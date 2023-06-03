@@ -199,7 +199,7 @@ initcart: @called from C:  r0=rom, (r1=emuFlags?)
 	strb_ r1,cartFlags		@ set cartFlags(upper 4-bits (<<8, ignored) + 0000(should be zero)(<<4) + vTsM)
 	@DEBUGINFO CARTFLAG, r1
 
-	ldr r0,=pcm_scanlineHook
+	ldr r0,=void
 	str_ r0,scanlineHook	@ no mapper irq
 
 	mov r0,#0x0				@ clear nes ram		reset value changed from 0xFFFFFFFF to 0x0
