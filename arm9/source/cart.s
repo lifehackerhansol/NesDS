@@ -312,7 +312,7 @@ lc1:					@ call mapperXXinit
 	ldr r0,[r1,#-4]		@ r0 = mapperxxxinit
 	ldmia r0!,{r1-r4}
 	stmia r5,{r1-r4}	@ set default (write) operation for NES(0x8000 ~ 0xFFFF), maybe 'void', according to Mapper.
-	blx r0				@ go maper_init
+	blx r0				@ go mapper_init
 
 	ldrb_ r1,cartFlags
 	tst r1,#MIRROR		@ set default mirror, horizontal mirroring

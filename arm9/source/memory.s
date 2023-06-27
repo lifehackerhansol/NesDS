@@ -124,7 +124,7 @@ mem_WE0:	@rom write ($E000-$FFFF)
 	strb r0,[r1,addy]
 	bx lr
 @---------------------------------------------------------------------------------
-@rom_R	@rom read ($8000-$FFFF) (actually $6000-$FFFF now)
+@mem_R	@mem read ($8000-$FFFF) (actually $6000-$FFFF now)
 @---------------------------------------------------------------------------------
 @	adr r2,m6502MemTbl
 @	ldr r1,[r2,r1,lsr#11] @r1=addy & 0xe000
