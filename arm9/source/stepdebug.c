@@ -52,6 +52,7 @@ void shex(unsigned char *p,int d,int n) {
 
 void stepdebug()
 { 
+#if 0
 	static int frameCount = 0;
 	static int line, keys, oldkeys, opCount = 0;
 	unsigned int i;
@@ -115,4 +116,5 @@ void stepdebug()
 	while(1);
 	oldkeys = keys;
 	//pstep = stepinfo;
+#endif
 }
