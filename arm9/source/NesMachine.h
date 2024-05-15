@@ -13,7 +13,7 @@ typedef struct {
 	RP2C02 ppu;
 	u8 mapperData[96];
 
-	u32 *romBase;
+	u8 *romBase;
 	u32 romMask;
 	u32 prgSize8k;
 	u32 prgSize16k;

@@ -58,7 +58,7 @@ typedef struct {
 	u32 ppuChrLatch;
 	u32 ppuOAMMem[64];
 
-	void *ppuIrqFunc;
+	void (*ppuIrqFunc)(bool);
 } RP2C02;
 
 #ifdef __cplusplus

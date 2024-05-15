@@ -9,9 +9,6 @@
 	.global cpuInit
 	.global CPU_reset
 
-pcmirqbakup = mapperData+24
-pcmirqcount = mapperData+28
-
 	.syntax unified
 	.arm
 

@@ -74,10 +74,10 @@ void stepdebug()
 	line = globals.ppu.scanline;
 	shex32(ptbuf + 6, frameCount);
 	shex16(ptbuf + 20, globals.ppu.scanline);
-//	shex16(ptbuf + 32 + 3, rp2A03.m6502.regPc - rp2A03.m6502.lastBank);
-//	shex8(ptbuf + 32 + 8, *rp2A03.m6502.regPc);
-//	shex8(ptbuf + 32 + 11, *(rp2A03.m6502.regPc + 1));
-//	shex8(ptbuf + 32 + 14, *(rp2A03.m6502.regPc + 2));
+	shex16(ptbuf + 32 + 3, rp2A03.m6502.regPc - rp2A03.m6502.lastBank);
+	shex8(ptbuf + 32 + 8, *rp2A03.m6502.regPc);
+	shex8(ptbuf + 32 + 11, *(rp2A03.m6502.regPc + 1));
+	shex8(ptbuf + 32 + 14, *(rp2A03.m6502.regPc + 2));
 	shex32(ptbuf + 50, opCount);
 
 	shex8(ptbuf + 64 + 2, rp2A03.m6502.regA>>24);
@@ -92,7 +92,7 @@ void stepdebug()
 		shex8(ptbuf + 128 + 3*i, globals.ppu.nesChrMap[i + 8]);
 	}
 	for(i = 4; i < 8; i++) {
-//		shex8(ptbuf + 128 + 3*i, ((rp2A03.memTbl[i] - globals.romBase) >> 13) + i);
+		shex8(ptbuf + 128 + 3*i, ((rp2A03.m6502.memTbl[i] - globals.romBase) >> 13) + i);
 	}
 
 	consoletext(0, ptbuf, 0);
